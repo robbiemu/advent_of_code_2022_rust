@@ -9,7 +9,7 @@ fn main() {
     if let Ok(lines) = read_lines(input_filename) {
 
         for line in lines {
-            if let Ok(ip) = line {
+            if let Ok(record) = line {
 
             }
         }
