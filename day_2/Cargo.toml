@@ -1,0 +1,16 @@
+[package]
+name = "day_2"
+version = "0.1.3"
+edition = "2021"
+license = "MIT"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+lazy_static = "1.4.0"
+strum = "0.24"
+strum_macros = "0.24.3"
+
+[[bin]]
+name = "rps_strategy"
+path = "src/main.rs"
