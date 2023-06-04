@@ -3,16 +3,15 @@ use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
 
+use problem_solver_module::{initialize, solve, output};
+
 fn main() {
     let args: Vec<String> = env::args().collect();
     let input_filename = &args[1];
     if let Ok(lines) = read_lines(input_filename) {
-
-        for line in lines {
-            if let Ok(record) = line {
-
-            }
-        }
+        let input = initialize(lines);
+        let solution = solve(input);
+        output(solution);
     }
 }
 
