@@ -8,9 +8,11 @@ license = "MIT"
 
 [dependencies]
 lazy_static = "1.4.0"
-strum = "0.24"
-strum_macros = "0.24.3"
 
 [[bin]]
 name = "rps_strategy"
+path = "src/main.rs"
+
+[[bin]]
+name = "rps_guess"
 path = "src/main.rs"
