@@ -10,3 +10,7 @@ edition = "2021"
 [[bin]]
 name = "rucksack_priorities"
 path = "src/rucksack_priorities.rs"
+
+[[bin]]
+name = "safety_badges"
+path = "src/safety_badges.rs"

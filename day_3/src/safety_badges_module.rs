@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+//use std::collections::HashMap;
 
 use super::problem_solver::ProblemSolver;
 
@@ -19,32 +19,31 @@ impl ProblemSolver for ProblemSolverPattern {
   
   fn initialize(lines: impl Iterator<Item = String>) -> Self::Input {
     let mut common: Vec<char> = vec![];
-    for record in lines {
-      let mut interim: HashMap<char, bool> = HashMap::new();
-      let i = record.len() / 2;
-      let first = &record[..i].chars().collect::<Vec<_>>();
-      let rest = &record[i..];
-      for c in first {
-        if rest.contains(*c) && !interim.contains_key(&c) {
-          interim.insert(*c, true);
+    let lines_vec: Vec<_> = lines.collect();
+    let mut line_chunks = lines_vec.chunks(3);
+    while let Some(group) = line_chunks.next() {
+      for c in group[0].chars() {
+        if group[1].contains(c) && group[2].contains(c) {
+          common.push(c);
+          break;
         }
       }
-      common.extend(interim.keys().cloned());
     }
-    
+
     PSInput { common }
-  }
+}
   
   fn solve(input: Self::Input) -> Self::Solution {
     let score=input.common.iter()
-      .map(|c| {
+      .enumerate()
+      .map(|(i, c)| {
         let mut priority = *c as u32 - 64;
         if priority < 27 {
           priority += 26;
         } else {
           priority -= 32;
         }
-        println!("{} -> {}", *c, priority);
+        println!("[{}] {} -> {}", i, *c, priority);
         priority
       })
       .sum();
