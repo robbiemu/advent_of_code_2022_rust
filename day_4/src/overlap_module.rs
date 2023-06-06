@@ -20,7 +20,7 @@ impl ProblemSolver for ProblemSolverPattern {
     let mut left_ranges: Vec<(u32, u32)> = vec![];
     let mut right_ranges: Vec<(u32, u32)> = vec![];
     for record in lines {
-      let Some((left, right)) = record.split_once(",").expect(&format!(
+      let (left, right) = record.split_once(",").expect(&format!(
         "precondition failure! lines must be ranges of positive integers of the form x-y,a-b, found (record):\n{}", 
         record
       ));
@@ -28,13 +28,13 @@ impl ProblemSolver for ProblemSolverPattern {
         "precondition failure! lines must be ranges of positive integers of the form x-y,a-b, found:\n{}",
         record
       );
-      let Some((x, y)) = left.split_once("-").expect(fmt_error);
+      let (x, y) = left.split_once("-").expect(fmt_error);
       let left_range = (
         x.parse().expect(fmt_error),
         y.parse().expect(fmt_error),
       );
       left_ranges.push(left_range);
-      let Some((a,b)) = right.split_once("-").expect(fmt_error)
+      let (a,b) = right.split_once("-").expect(fmt_error);
       let right_range = (
         a.parse().expect(fmt_error), 
         b.parse().expect(fmt_error)
