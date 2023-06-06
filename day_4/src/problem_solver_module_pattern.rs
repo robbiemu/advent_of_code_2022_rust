@@ -1,5 +1,6 @@
 use super::problem_solver::ProblemSolver;
 
+
 pub struct PSInput {
   // Define the structure of input data for the problem
 }
@@ -28,4 +29,3 @@ impl ProblemSolver for ProblemSolverPattern {
     unimplemented!() // Implement output logic specific to this problem
   }
 }
-

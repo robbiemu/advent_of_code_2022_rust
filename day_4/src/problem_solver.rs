@@ -16,7 +16,7 @@ pub trait ProblemSolver {
 pub fn solve_problem<T: ProblemSolver>() {
   let args: Vec<String> = std::env::args().collect();
   if args.len() < 2 {
-    println!("must provide an input file (from context of current working directory)");
+    eprintln!("must provide an input file (from context of current working directory)");
     process::exit(1);
   }
   let input_filename = &args[1];
@@ -27,7 +27,7 @@ pub fn solve_problem<T: ProblemSolver>() {
       T::output(solution);
     }
     Err(err) => {
-      println!("Failed to open input file: {}", err);
+      eprintln!("Failed to open input file: {}", err);
       process::exit(1);
     }
   }
