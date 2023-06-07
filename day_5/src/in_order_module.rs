@@ -33,6 +33,7 @@ impl ProblemSolver for ProblemSolverPattern {
   
   fn initialize(lines: impl Iterator<Item = String>) -> Self::Input {
     let mut stacks: Vec<Vec<char>> = vec![];
+ 
     let mut moves: Vec<Move> = vec![];
     let mut is_record_a_move = false;
     for record in lines {
@@ -42,17 +43,19 @@ impl ProblemSolver for ProblemSolverPattern {
         }
       } else {
         let (crates, is_end_of_crates) = 
-        crates_from_record(record.clone());
-        if is_end_of_crates {
-          is_record_a_move = true;
-          
-          continue;
-        }
+          crates_from_record(record.clone());
         if stacks.len() == 0 {
           for _ in 0..crates.len() {
             stacks.push(vec![] );
           }
         }
+
+        if is_end_of_crates {
+          is_record_a_move = true;
+          
+          continue;
+        }
+
         crates.iter().enumerate().for_each(|(i, c)| {
           if let Some(&first_char) = c.first() {
             stacks
@@ -111,26 +114,23 @@ fn move_from_record(record: String) -> Option<Move> {
 }
 
 fn crates_from_record(record: String) -> (Vec<Vec<char>>, bool) {
-  let crates: Vec<String> = record
-  .chars()
-  .collect::<Vec<char>>()
-  .chunks(4)
-  .map(|chunk| chunk.iter().collect())
-  .collect();
-  
-  if !crates[0].starts_with('[') {
+  if !record.starts_with('[') {
     return (vec![], true);
   }
   
-  let rotated: Vec<Vec<char>> = crates
-  .into_iter()
-  .map(|c| {
-    let trimmed = c.trim_start_matches('[')
+  let crates: Vec<Vec<char>> = record
+  .chars()
+  .collect::<Vec<char>>()
+  .chunks(4)
+  .map(|chunk| {
+    chunk.iter()
+    .collect::<String>()
+    .trim_start_matches('[')
     .trim_end_matches("] ")
-    .trim();
-    trimmed.chars().collect()
-  })
-  .collect();
+    .trim()
+    .chars()
+    .collect::<Vec<char>>()
+  }).collect::<Vec<Vec<char>>>();
   
-  (rotated, false)
+  (crates, false)
 }
