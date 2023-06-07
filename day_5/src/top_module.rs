@@ -1,7 +1,8 @@
 use lazy_static::lazy_static;
-
 use regex::Regex;
+use std::collections::VecDeque;
 use std::iter::empty;
+
 use super::problem_solver::ProblemSolver;
 
 
@@ -116,19 +117,20 @@ fn crates_from_record(record: String) -> (Vec<Vec<char>>, bool) {
     return (vec![], true);
   }
   
-  let crates: Vec<Vec<char>> = record
-  .chars()
-  .collect::<Vec<char>>()
-  .chunks(4)
-  .map(|chunk| {
-    chunk.iter()
-    .collect::<String>()
-    .trim_start_matches('[')
-    .trim_end_matches("] ")
-    .trim()
-    .chars()
-    .collect::<Vec<char>>()
-  }).collect::<Vec<Vec<char>>>();
-  
+  let mut queue = VecDeque::new();
+  for i in 0..record.len() {
+    match i % 4 {
+      0 => queue.push_back(Vec::new()),
+      1 => {
+        let c = record.chars().nth(i).unwrap().clone();
+        if !c.is_whitespace() {
+          queue.back_mut().unwrap().push(c);
+        }
+      },
+      _ => ()
+    }
+  }
+  let crates: Vec<Vec<char>> = queue.into_iter().collect();
+
   (crates, false)
 }
