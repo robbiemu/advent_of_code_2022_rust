@@ -13,3 +13,7 @@ itertools = "0.10.5"
 [[bin]]
 name = "top"
 path = "src/top.rs"
+
+[[bin]]
+name = "in_order"
+path = "src/in_order.rs"
