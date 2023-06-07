@@ -112,26 +112,23 @@ fn move_from_record(record: String) -> Option<Move> {
 }
 
 fn crates_from_record(record: String) -> (Vec<Vec<char>>, bool) {
-  let crates: Vec<String> = record
-  .chars()
-  .collect::<Vec<char>>()
-  .chunks(4)
-  .map(|chunk| chunk.iter().collect())
-  .collect();
-  
-  if !crates[0].starts_with('[') {
+  if !record.starts_with('[') {
     return (vec![], true);
   }
   
-  let rotated: Vec<Vec<char>> = crates
-  .into_iter()
-  .map(|c| {
-    let trimmed = c.trim_start_matches('[')
+  let crates: Vec<Vec<char>> = record
+  .chars()
+  .collect::<Vec<char>>()
+  .chunks(4)
+  .map(|chunk| {
+    chunk.iter()
+    .collect::<String>()
+    .trim_start_matches('[')
     .trim_end_matches("] ")
-    .trim();
-    trimmed.chars().collect()
-  })
-  .collect();
+    .trim()
+    .chars()
+    .collect::<Vec<char>>()
+  }).collect::<Vec<Vec<char>>>();
   
-  (rotated, false)
+  (crates, false)
 }
