@@ -8,7 +8,7 @@ use problem_solver_shuttle_axum::solve_problem;
 async fn problem_solver_axum(payload: String) 
 -> &'static str 
 {
-  solve_problem::<ProblemSolverPattern>(payload)
+  solve_problem::<ProblemSolverPattern>(payload, None)
 }
 
 #[shuttle_runtime::main]

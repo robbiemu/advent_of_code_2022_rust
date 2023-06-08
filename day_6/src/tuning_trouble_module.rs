@@ -46,7 +46,7 @@ impl ProblemSolver for ProblemSolverPattern {
   }
   
   fn solve(input: Self::Input, context: Option<PSContext>) 
-    -> Self::Solution 
+  -> Self::Solution 
   {
     let context = context.expect("Context not provided");
     let window_size = context.data;
@@ -64,7 +64,9 @@ impl ProblemSolver for ProblemSolverPattern {
     Self::Solution{ position }
   }
   
-  fn output(solution: Self::Solution, context: Option<PSContext>) -> String {
+  fn output(solution: Self::Solution, context: Option<PSContext>) 
+  -> String 
+  {
     let context = context.expect("Context not provided");
     let window_size = context.data;
 
