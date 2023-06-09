@@ -1,4 +1,4 @@
-use petgraph::stable_graph::StableGraph;
+use petgraph::stable_graph::{NodeIndex, StableGraph};
 use petgraph::Directed;
 
 use super::problem_solver::ProblemSolver;
@@ -6,12 +6,15 @@ use super::fs_graph::factory_fs_graph;
 use super::du_directories::du_directories;
 
 
+const TOTAL_SPACE: u64 = 70_000_000;
+const THRESHOLD: u64 = 30_000_000;
+
 pub struct PSInput {
   graph: StableGraph<u64, u64, Directed>
 }
 
 pub struct PSSolution {
-  sum: u64
+  smallest: u64
 }
 
 pub struct ProblemSolverPattern;
@@ -28,24 +31,23 @@ impl ProblemSolver for ProblemSolverPattern {
   
   fn solve(input: Self::Input) -> Self::Solution {
     let graph = du_directories(input.graph);
-    
-    let sum = graph.node_indices().fold(0, |acc, curr| {
-      if graph[curr] <= 100_000 && acc < u64::MAX {
-        if let Some(new_sum) = acc.checked_add(graph[curr]) {
-          new_sum
-        } else {
-          u64::MAX
-        }
-      } else {
-        acc
-      }
-    });
-    
-    Self::Solution { sum }
+
+    let free_space = TOTAL_SPACE - graph[NodeIndex::new(1)];
+    let target = THRESHOLD - free_space;  
+
+    let smallest_large = graph
+    .node_indices()
+    .filter(|&node| graph[node] > target)
+    .min_by_key(|&node| graph[node])
+    .unwrap();
+  
+    let smallest = graph[smallest_large];
+
+    Self::Solution { smallest }
   }
   
   fn output(solution: Self::Solution) {
-    println!("{}", solution.sum)
+    println!("{}", solution.smallest)
   }
 }
 

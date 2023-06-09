@@ -11,3 +11,7 @@ petgraph = "0.6.3"
 [[bin]]
 name = "total_smalls"
 path = "src/total_smalls.rs"
+
+[[bin]]
+name = "smallest_large"
+path = "src/smallest_large.rs"
