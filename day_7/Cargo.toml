@@ -1,14 +1,13 @@
 [package]
-name = "robbiemu-aoc-day6"
+name = "day_7"
 version = "0.1.0"
 edition = "2021"
-publish = false
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-shuttle-runtime = "0.17.0"
-axum = "0.6.18"
-shuttle-axum = "0.17.0"
-tokio = "1.28.2"
-regex = "1.8.4"
+petgraph = "0.6.3"
+
+[[bin]]
+name = "total_smalls"
+path = "src/total_smalls.rs"

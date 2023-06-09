@@ -77,9 +77,9 @@ impl ProblemSolver for ProblemSolverPattern {
       n => format!(
         "window of {} unique characrters found in position {}", 
         window_size, n)
-      }
     }
   }
+}
   
   fn has_n_unique_chars(n: usize, chars: &[char]) -> bool {
     let mut unique_chars = HashSet::new();
