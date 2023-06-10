@@ -7,7 +7,7 @@ use std::process;
 pub trait ProblemSolver {
   type Input;
   type Solution;
-  
+
   fn initialize(lines: impl Iterator<Item = String>) -> Self::Input;
   fn solve(input: Self::Input) -> Self::Solution;
   fn output(solution: Self::Solution);
@@ -35,7 +35,7 @@ pub fn solve_problem<T: ProblemSolver>() {
 
 fn read_lines<P>(filename: P) -> std::io::Result<Lines<BufReader<File>>>
 where
-P: AsRef<Path>,
+  P: AsRef<Path>,
 {
   let file = File::open(filename)?;
   Ok(BufReader::new(file).lines())

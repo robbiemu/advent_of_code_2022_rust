@@ -1,4 +1,13 @@
 {
+  "[rust]": {
+    "editor.defaultFormatter": "rust-lang.rust-analyzer",
+    "editor.formatOnSave": true,
+    "editor.tabSize": 2
+  },
+  "rust-analyzer.inlayHints.bindingModeHints.enable": true,
+  "rust-analyzer.inlayHints.typeHints.enable": false,
+  "rust-analyzer.check.command": "clippy",
+  "rust-analyzer.cargo.buildScripts.overrideCommand": null,
   "rust-analyzer.linkedProjects": [
     "./day_8/Cargo.toml",
     "./day_7/Cargo.toml",
@@ -8,6 +17,12 @@
     "./day_3/Cargo.toml",
     "./day_2/Cargo.toml",
     "./day_1/Cargo.toml",
-    "./day_8/Cargo.toml"
+  ],
+  "rust-analyzer.rustfmt.extraArgs": [
+    "--config",
+    "tab_spaces=2",
+    "--config",
+    "blank_lines_upper_bound=2"
   ]
+
 }

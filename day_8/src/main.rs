@@ -1,8 +1,6 @@
-use axum::{
-  Router, routing::post, 
-};
-use std::net::SocketAddr;
+use axum::{routing::post, Router};
 use std::env;
+use std::net::SocketAddr;
 
 mod visible;
 use visible::Part1Solver;
@@ -16,21 +14,20 @@ mod common;
 #[tokio::main]
 async fn main() {
   if env::var("RUST_LOG").is_err() {
-    // Set RUST_LOG to 'debug' if it's not already defined
     env::set_var("RUST_LOG", "debug");
   }
   tracing_subscriber::fmt::init(); // initialize tracing
-  
+
   let app = Router::new()
-  .route("/part_1", post(part_1))
-  .route("/part_2", post(part_2));
-  
+    .route("/part_1", post(part_1))
+    .route("/part_2", post(part_2));
+
   let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
   tracing::info!("listening on {}", addr);
   axum::Server::bind(&addr)
-  .serve(app.into_make_service())
-  .await
-  .unwrap();
+    .serve(app.into_make_service())
+    .await
+    .unwrap();
 }
 
 async fn part_1(payload: String) -> String {

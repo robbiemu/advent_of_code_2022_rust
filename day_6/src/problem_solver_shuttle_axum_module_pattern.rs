@@ -17,7 +17,7 @@ pub struct PSContext {
 
 impl PSContext {
   pub fn from(data: usize) -> PSContext {
-      PSContext { data } 
+      PSContext { data }
   }
 }
 */
@@ -28,25 +28,18 @@ impl ProblemSolver for ProblemSolverPattern {
   type Input = PSInput;
   type Solution = PSSolution;
   type Context = PSContext;
-  
-  fn initialize(
-    lines: impl Iterator<Item = String>, 
-    _context: PSContext
-  ) -> Self::Input {
-    /* Implement initialization logic to prepare the input to this 
+
+  fn initialize(lines: impl Iterator<Item = String>, _context: PSContext) -> Self::Input {
+    /* Implement initialization logic to prepare the input to this
     solver */
-    unimplemented!() 
+    unimplemented!()
   }
-  
-  fn solve(input: Self::Input, _context: PSContext) 
-  -> Self::Solution 
-  {
+
+  fn solve(input: Self::Input, _context: PSContext) -> Self::Solution {
     unimplemented!() // Implement logic to solve this problem
   }
-  
-  fn output(solution: Self::Solution, _context: PSContext) 
-  -> &'static str 
-  {
+
+  fn output(solution: Self::Solution, _context: PSContext) -> &'static str {
     unimplemented!() // Implement output logic specific to this problem
   }
 }
