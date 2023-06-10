@@ -14,17 +14,17 @@ pub struct Part2Solver;
 impl ProblemSolver for Part2Solver {
   type Input = PSInput;
   type Solution = PSSolution;
-  
+
   fn initialize(lines: impl Iterator<Item = String>) -> Self::Input {
-    /* Implement initialization logic to prepare the input to this 
+    /* Implement initialization logic to prepare the input to this
     solver */
-    unimplemented!() 
+    unimplemented!()
   }
-  
+
   fn solve(input: Self::Input) -> Self::Solution {
     unimplemented!() // Implement logic to solve this problem
   }
-  
+
   fn output(solution: Self::Solution) -> String {
     unimplemented!() // Implement output logic specific to this problem
   }

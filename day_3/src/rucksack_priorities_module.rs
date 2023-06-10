@@ -2,13 +2,12 @@ use std::collections::HashMap;
 
 use super::problem_solver::ProblemSolver;
 
-
 pub struct PSInput {
   common: Vec<char>,
 }
 
 pub struct PSSolution {
-  score: u32
+  score: u32,
 }
 
 pub struct ProblemSolverPattern;
@@ -16,7 +15,7 @@ pub struct ProblemSolverPattern;
 impl ProblemSolver for ProblemSolverPattern {
   type Input = PSInput;
   type Solution = PSSolution;
-  
+
   fn initialize(lines: impl Iterator<Item = String>) -> Self::Input {
     let mut common: Vec<char> = vec![];
     for record in lines {
@@ -25,18 +24,20 @@ impl ProblemSolver for ProblemSolverPattern {
       let first = &record[..i].chars().collect::<Vec<_>>();
       let rest = &record[i..];
       for c in first {
-        if rest.contains(*c) && !interim.contains_key(&c) {
+        if rest.contains(*c) && !interim.contains_key(c) {
           interim.insert(*c, true);
         }
       }
       common.extend(interim.keys().cloned());
     }
-    
+
     PSInput { common }
   }
-  
+
   fn solve(input: Self::Input) -> Self::Solution {
-    let score=input.common.iter()
+    let score = input
+      .common
+      .iter()
       .map(|c| {
         let mut priority = *c as u32 - 64;
         if priority < 27 {
@@ -51,9 +52,8 @@ impl ProblemSolver for ProblemSolverPattern {
 
     PSSolution { score }
   }
-  
+
   fn output(solution: Self::Solution) {
     println!("score: {}", solution.score);
   }
 }
-
