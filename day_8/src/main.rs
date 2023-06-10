@@ -4,10 +4,10 @@ use axum::{
 use std::net::SocketAddr;
 use std::env;
 
-mod part1;
-use part1::Part1Solver;
-mod part2;
-use part2::Part2Solver;
+mod visible;
+use visible::Part1Solver;
+mod scenic_score;
+use scenic_score::Part2Solver;
 mod problem_solver_axum;
 use problem_solver_axum::solve_problem;
 mod common;
