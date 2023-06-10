@@ -15,7 +15,6 @@ use problem_solver::solve_problem;
 #[tokio::main]
 async fn axum() -> shuttle_axum::ShuttleAxum {
   if env::var("RUST_LOG").is_err() {
-    // Set RUST_LOG to 'debug' if it's not already defined
     env::set_var("RUST_LOG", "debug");
   }
   tracing_subscriber::fmt::init(); // initialize tracing
@@ -33,9 +32,9 @@ async fn axum() -> shuttle_axum::ShuttleAxum {
 }
 
 async fn part_1(payload: String) -> String {
-  solve_problem::<Part1SolverPattern>(payload)
+  solve_problem::<Part1Solver>(payload)
 }
 
 async fn part_2(payload: String) -> String {
-  solve_problem::<Part2SolverPattern>(payload)
+  solve_problem::<Part2Solver>(payload)
 }

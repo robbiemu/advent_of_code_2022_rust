@@ -71,7 +71,13 @@ rotated: &Vec<Vec<u32>>) -> usize {
   let down = rotated[pos.1][pos.0 + 1..].iter().enumerate()
   .find_map(cardinal_view).unwrap_or(rotated[pos.1][pos.0 + 1..].len());
 
-  println!("{} {:?} => {} [{:?}:{} {:?}:{} {:?}:{} {:?}:{}]", tree, pos, left * right * up * down, map[pos.0][..pos.1].iter().rev().collect::<Vec<_>>(), left, map[pos.0][pos.1 + 1..].to_vec(), right, rotated[pos.1][..pos.0].iter().rev().collect::<Vec<_>>(), up, rotated[pos.1][pos.0 + 1..].to_vec(), down);
+  println!("{} {:?} => {} [{:?}:{} {:?}:{} {:?}:{} {:?}:{}]", tree, pos, 
+    left * right * up * down, 
+    map[pos.0][..pos.1].iter().rev().collect::<Vec<_>>(), left, 
+    map[pos.0][pos.1 + 1..].to_vec(), right, 
+    rotated[pos.1][..pos.0].iter().rev().collect::<Vec<_>>(), up, 
+    rotated[pos.1][pos.0 + 1..].to_vec(), down
+  );
 
   left * right * up * down
 }
