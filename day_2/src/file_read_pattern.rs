@@ -8,7 +8,7 @@ fn main() {
   let args: Vec<String> = env::args().collect();
   let input_filename = &args[1];
   if let Ok(lines) = read_lines(input_filename) {
-    for record in lines.flatten() {}
+    for _record in lines.flatten() {}
   }
 }
 

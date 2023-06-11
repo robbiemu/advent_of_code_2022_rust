@@ -6,11 +6,7 @@ pub struct ProblemContexts<Ctx> {
 
 impl<Ctx> Default for ProblemContexts<Ctx> {
   fn default() -> Self {
-    ProblemContexts {
-      initialize: None,
-      solve: None,
-      output: None,
-    }
+    ProblemContexts { initialize: None, solve: None, output: None }
   }
 }
 
@@ -19,10 +15,16 @@ pub trait ProblemSolver {
   type Solution;
   type Context;
 
-  fn initialize(lines: impl Iterator<Item = String>, context: Option<Self::Context>)
-    -> Self::Input;
-  fn solve(input: Self::Input, context: Option<Self::Context>) -> Self::Solution;
-  fn output(solution: Self::Solution, context: Option<Self::Context>) -> String;
+  fn initialize(
+    lines: impl Iterator<Item = String>,
+    context: Option<Self::Context>,
+  ) -> Self::Input;
+  fn solve(
+    input: Self::Input,
+    context: Option<Self::Context>,
+  ) -> Self::Solution;
+  fn output(solution: Self::Solution, context: Option<Self::Context>)
+    -> String;
 }
 
 pub fn solve_problem<T: ProblemSolver>(

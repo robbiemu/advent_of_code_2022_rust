@@ -2,7 +2,9 @@ use petgraph::stable_graph::{NodeIndex, StableGraph};
 use petgraph::{Directed, Incoming};
 
 
-pub fn du_directories(g: StableGraph<u64, u64, Directed>) -> StableGraph<u64, u64, Directed> {
+pub fn du_directories(
+  g: StableGraph<u64, u64, Directed>,
+) -> StableGraph<u64, u64, Directed> {
   let mut graph = g.clone();
   let file_indices = g.node_indices().filter(|&i| g[i] > 0);
   for node in file_indices {
@@ -13,7 +15,10 @@ pub fn du_directories(g: StableGraph<u64, u64, Directed>) -> StableGraph<u64, u6
   graph
 }
 
-fn propagate_values_up_tree(graph: &mut StableGraph<u64, u64, Directed>, node: NodeIndex) {
+fn propagate_values_up_tree(
+  graph: &mut StableGraph<u64, u64, Directed>,
+  node: NodeIndex,
+) {
   let mut stack = vec![node];
 
   while let Some(current_node) = stack.pop() {

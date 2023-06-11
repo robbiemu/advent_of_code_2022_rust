@@ -7,6 +7,7 @@
   "rust-analyzer.inlayHints.bindingModeHints.enable": true,
   "rust-analyzer.inlayHints.typeHints.enable": false,
   "rust-analyzer.check.command": "clippy",
+  "rust-analyzer.checkOnSave": true,
   "rust-analyzer.cargo.buildScripts.overrideCommand": null,
   "rust-analyzer.linkedProjects": [
     "./day_1/Cargo.toml",
@@ -29,6 +30,6 @@
     "--config",
     "format_strings=true",
     "--config",
-    "struct_lit_width=80"
+    "struct_lit_width=50"
   ]
 }
