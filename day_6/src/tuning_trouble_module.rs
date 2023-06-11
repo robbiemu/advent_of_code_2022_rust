@@ -28,7 +28,10 @@ impl ProblemSolver for ProblemSolverPattern {
   type Solution = PSSolution;
   type Context = PSContext;
 
-  fn initialize(lines: impl Iterator<Item = String>, _: Option<PSContext>) -> Self::Input {
+  fn initialize(
+    lines: impl Iterator<Item = String>,
+    _: Option<PSContext>,
+  ) -> Self::Input {
     let mut lines = lines.peekable();
     match lines.next() {
       Some(stream) => {

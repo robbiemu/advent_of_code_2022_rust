@@ -1,4 +1,6 @@
-pub fn get_map<T: From<u8>>(lines: impl Iterator<Item = String>) -> Vec<Vec<T>> {
+pub fn get_map<T: From<u8>>(
+  lines: impl Iterator<Item = String>,
+) -> Vec<Vec<T>> {
   lines
     .map(|line| {
       if line.is_empty() {

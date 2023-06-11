@@ -20,7 +20,9 @@ pub fn solve_problem<T: ProblemSolver>() {
   }
 }
 
-fn read_lines<P>(filename: P) -> std::io::Result<std::io::Lines<std::io::BufReader<File>>>
+fn read_lines<P>(
+  filename: P,
+) -> std::io::Result<std::io::Lines<std::io::BufReader<File>>>
 where
   P: AsRef<std::path::Path>,
 {

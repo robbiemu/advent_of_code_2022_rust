@@ -29,7 +29,10 @@ impl ProblemSolver for ProblemSolverPattern {
   type Solution = PSSolution;
   type Context = PSContext;
 
-  fn initialize(lines: impl Iterator<Item = String>, _context: PSContext) -> Self::Input {
+  fn initialize(
+    lines: impl Iterator<Item = String>,
+    _context: PSContext,
+  ) -> Self::Input {
     /* Implement initialization logic to prepare the input to this
     solver */
     unimplemented!()

@@ -3,11 +3,14 @@ use petgraph::Directed;
 use std::collections::HashMap;
 
 
-pub fn factory_fs_graph(lines: impl Iterator<Item = String>) -> StableGraph<u64, u64, Directed> {
+pub fn factory_fs_graph(
+  lines: impl Iterator<Item = String>,
+) -> StableGraph<u64, u64, Directed> {
   let mut graph = StableGraph::<u64, u64, Directed>::new();
   let shadow_root_index = graph.add_node(0);
   let mut cwd: Vec<NodeIndex> = vec![shadow_root_index];
-  let mut parent_to_child: HashMap<NodeIndex, Vec<(String, NodeIndex)>> = HashMap::new();
+  let mut parent_to_child: HashMap<NodeIndex, Vec<(String, NodeIndex)>> =
+    HashMap::new();
 
   for line in lines {
     match identify_line_type(&line) {
@@ -75,9 +78,9 @@ fn change_directory(
       }
     } else {
       let cwdi = cwd.last().cloned().unwrap();
-      let child = parent_to_child
-        .get(&cwdi)
-        .and_then(|children| children.iter().find(|(dirname, _)| dirname == &dir));
+      let child = parent_to_child.get(&cwdi).and_then(|children| {
+        children.iter().find(|(dirname, _)| dirname == &dir)
+      });
       if let Some((_, i)) = child {
         cwd.push(*i);
       } else {

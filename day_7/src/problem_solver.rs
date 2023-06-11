@@ -16,7 +16,9 @@ pub trait ProblemSolver {
 pub fn solve_problem<T: ProblemSolver>() {
   let args: Vec<String> = std::env::args().collect();
   if args.len() < 2 {
-    eprintln!("must provide an input file (from context of current working directory)");
+    eprintln!(
+      "must provide an input file (from context of current working directory)"
+    );
     process::exit(1);
   }
   let input_filename = &args[1];
