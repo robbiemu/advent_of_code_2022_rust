@@ -25,6 +25,10 @@
     "--config",
     "blank_lines_upper_bound=2",
     "--config",
-    "max_width=80"
+    "max_width=80",
+    "--config",
+    "format_strings=true",
+    "--config",
+    "struct_lit_width=80"
   ]
 }

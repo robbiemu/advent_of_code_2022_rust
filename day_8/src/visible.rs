@@ -1,5 +1,5 @@
 use super::common::{get_map, rotate_2d_collection};
-use super::problem_solver_axum::ProblemSolver;
+use super::problem_solver_service::ProblemSolver;
 
 
 pub struct PSInput {
@@ -36,7 +36,12 @@ impl ProblemSolver for Part1Solver {
   }
 }
 
-fn calculate_visible(map: &[Vec<u8>], rotated: &[Vec<u8>], last_x: usize, last_y: usize) -> u32 {
+fn calculate_visible(
+  map: &[Vec<u8>],
+  rotated: &[Vec<u8>],
+  last_x: usize,
+  last_y: usize,
+) -> u32 {
   map
     .iter()
     .enumerate()
@@ -56,7 +61,10 @@ fn calculate_visible(map: &[Vec<u8>], rotated: &[Vec<u8>], last_x: usize, last_y
           max_down
         );
 
-        if (max_left < tree || max_right < tree || max_up < tree || max_down < tree)
+        if (max_left < tree
+          || max_right < tree
+          || max_up < tree
+          || max_down < tree)
           || i == 0
           || i == last_y
           || j == 0

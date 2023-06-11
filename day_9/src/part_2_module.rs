@@ -24,7 +24,7 @@ impl ProblemSolver for CloudRunSolver {
 
 
   fn solve(input: Self::Input) -> Self::Solution {
-    let number_of_positions = get_tail_positions(input.moves, 2).len();
+    let number_of_positions = get_tail_positions(input.moves, 10).len();
 
     Self::Solution { number_of_positions }
   }

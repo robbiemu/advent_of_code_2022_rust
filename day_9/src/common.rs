@@ -1,8 +1,8 @@
 use regex::Regex;
 use std::collections::HashSet;
 
-#[derive(Debug)]
 
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum Directions {
   Up,
   Down,
@@ -22,10 +22,11 @@ impl Directions {
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Move {
-  direction: Directions,
-  distance: u8,
+  pub direction: Directions,
+  pub noncardinal_ternary: Option<Directions>,
+  pub distance: u8,
 }
 
 pub fn factory_move(record: String) -> Move {
@@ -36,133 +37,58 @@ pub fn factory_move(record: String) -> Move {
     let distance = captures[2].parse::<u8>().unwrap();
     let direction = Directions::from(&dir_str);
 
-    Move {
-      direction,
-      distance,
-    }
+    Move { direction, distance, noncardinal_ternary: None }
   } else {
     panic!("invalid format for line:\n {}", record);
   }
 }
 
-pub fn get_tail_positions(moves: &[Move]) -> HashSet<(i32, i32)> {
-  let mut y: i32 = 0;
-  let mut x: i32 = 0;
-  let mut w: i32 = 0;
-  let mut v: i32 = 0;
-  let mut tail_positions = HashSet::from([(w, v)]);
+pub fn get_tail_positions(
+  moves: Vec<Move>,
+  positions: usize,
+) -> HashSet<(i32, i32)> {
+  let mut knots: Vec<(i32, i32)> = vec![(0, 0); positions];
+
+  let mut visited: HashSet<(i32, i32)> = HashSet::new();
+  visited.insert(
+    knots
+      .last()
+      .cloned()
+      .unwrap_or_else(|| panic!("unreachable")),
+  );
 
   for mv in moves {
-    println!("{:?}", mv);
-    for _step in 0..mv.distance {
-      let prev_y = y;
-      let prev_x = x;
-
-      #[allow(unreachable_patterns)] // future-proof for additional variants
+    for _ in 0..mv.distance {
+      #[allow(unreachable_patterns)]
       match mv.direction {
-        Directions::Down => {
-          y += 1;
-        }
-        Directions::Right => {
-          x += 1;
-        }
-        Directions::Up => {
-          y -= 1;
-        }
-        Directions::Left => {
-          x -= 1;
-        }
-        _ => unreachable!(),
-      };
-
-      match (w, v) {
-        (_, _) if (w, v) == (prev_y, prev_x) || (w, v) == (y, x) => {
-          println!(
-            "{:?} : {:?} (from {:?}) ",
-            (w, v),
-            (y, x),
-            (prev_y, prev_x)
-          );
-          continue;
-        }
-        (_, _)
-          if has_cardinal_adjacency((w, v), (y, x))
-            || has_noncardinal_adjacency((w, v), (y, x)) =>
-        {
-          println!(
-            "{:?} : {:?} (from {:?}) ",
-            (w, v),
-            (y, x),
-            (prev_y, prev_x)
-          );
-          continue;
-        }
-        (_, _) if has_distant_cardinal_adjacency((w, v), (y, x)) => {
-          println!(
-            "cardinal {:?} : {:?} (from {:?}) ",
-            (w, v),
-            (y, x),
-            (prev_y, prev_x)
-          );
-
-          (w, v) = (prev_y, prev_x);
-        }
-        (_, _) if has_distant_noncardinal_adjacency((w, v), (y, x)) => {
-          println!(
-            "noncardinal {:?} : {:?} (from {:?}) ",
-            (w, v),
-            (y, x),
-            (prev_y, prev_x)
-          );
-
-          (w, v) = (prev_y, prev_x);
-        }
+        Directions::Up => knots[0].1 -= 1,
+        Directions::Down => knots[0].1 += 1,
+        Directions::Left => knots[0].0 -= 1,
+        Directions::Right => knots[0].0 += 1,
         _ => {
-          panic!(
-            "error: {:?} : {:?} (from {:?}) ",
-            (w, v),
-            (y, x),
-            (prev_y, prev_x)
-          );
+          println!("Invalid direction");
+          unreachable!();
         }
       }
 
-      tail_positions.insert((w, v));
+      for position in 0..positions - 1 {
+        let diff_x = knots[position].0 - knots[position + 1].0;
+        let diff_y = knots[position].1 - knots[position + 1].1;
+
+        if diff_x.abs() > 1 || diff_y.abs() > 1 {
+          knots[position + 1].0 += diff_x.signum();
+          knots[position + 1].1 += diff_y.signum();
+        }
+
+        visited.insert(
+          knots
+            .last()
+            .cloned()
+            .unwrap_or_else(|| panic!("unreachable")),
+        );
+      }
     }
   }
 
-  tail_positions
-}
-
-fn has_cardinal_adjacency(from: (i32, i32), to: (i32, i32)) -> bool {
-  let dy = (from.0 - to.0).abs();
-  let dx = (from.1 - to.1).abs();
-  (dy == 0 && dx == 1) || (dy == 1 && dx == 0)
-}
-
-fn has_noncardinal_adjacency(from: (i32, i32), to: (i32, i32)) -> bool {
-  let dy = (from.0 - to.0).abs();
-  let dx = (from.1 - to.1).abs();
-  dy == 1 && dx == 1
-}
-
-fn has_distant_cardinal_adjacency(from: (i32, i32), to: (i32, i32)) -> bool {
-  let (x1, y1) = from;
-  let (x2, y2) = to;
-
-  let distance = (x2 - x1).abs() + (y2 - y1).abs();
-
-  distance == 2
-    && ((x2 - x1).abs() == 2 && y2 == y1 || (y2 - y1).abs() == 2 && x2 == x1)
-}
-
-fn has_distant_noncardinal_adjacency(from: (i32, i32), to: (i32, i32)) -> bool {
-  let (x1, y1) = from;
-  let (x2, y2) = to;
-
-  let distance = (x2 - x1).abs() + (y2 - y1).abs();
-
-  distance == 3
-    && !((x2 == x1 + 3 || x2 == x1 - 3) && y2 == y1)
-    && !(x2 == x1 && (y2 == y1 + 3 || y2 == y1 - 3))
+  visited
 }

@@ -10,9 +10,8 @@ mod port_state_behavior;
 use port_state_behavior::get_port;
 mod problem_solver_service;
 use problem_solver_service::solve_problem;
-mod part_1_module;
-use part_1_module::CloudRunSolver;
-mod common;
+mod gcp_cloudrun_module;
+use gcp_cloudrun_module::CloudRunSolver;
 
 
 #[tokio::main]

@@ -1,14 +1,14 @@
-use super::common::*;
 use super::problem_solver_service::ProblemSolver;
 
 
 pub struct PSInput {
-  moves: Vec<Move>,
+  // Define the structure of input data for the problem
 }
 
 pub struct PSSolution {
-  number_of_positions: usize,
+  // Define the structure of the problem solution
 }
+
 
 pub struct CloudRunSolver;
 
@@ -17,19 +17,17 @@ impl ProblemSolver for CloudRunSolver {
   type Solution = PSSolution;
 
   fn initialize(lines: impl Iterator<Item = String>) -> Self::Input {
-    let moves: Vec<Move> = lines.map(factory_move).collect();
-
-    Self::Input { moves }
+    /* Implement initialization logic to prepare the input to this
+    solver */
+    unimplemented!()
   }
 
 
   fn solve(input: Self::Input) -> Self::Solution {
-    let number_of_positions = get_tail_positions(input.moves, 2).len();
-
-    Self::Solution { number_of_positions }
+    unimplemented!() // Implement logic to solve this problem
   }
 
   fn output(solution: Self::Solution) -> String {
-    format!("Number of positions {}", solution.number_of_positions)
+    unimplemented!() // Implement output logic specific to this problem
   }
 }
