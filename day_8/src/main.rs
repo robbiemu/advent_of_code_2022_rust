@@ -6,8 +6,8 @@ mod visible;
 use visible::Part1Solver;
 mod scenic_score;
 use scenic_score::Part2Solver;
-mod problem_solver_axum;
-use problem_solver_axum::solve_problem;
+mod problem_solver_service;
+use problem_solver_service::solve_problem;
 mod common;
 
 

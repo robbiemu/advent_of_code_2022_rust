@@ -1,5 +1,5 @@
 use super::common::{get_map, rotate_2d_collection};
-use super::problem_solver_axum::ProblemSolver;
+use super::problem_solver_service::ProblemSolver;
 
 pub struct PSInput {
   map: Vec<Vec<u32>>,
@@ -56,7 +56,11 @@ fn calculate_best_score(map: &Vec<Vec<u32>>, rotated: &[Vec<u32>]) -> usize {
     .unwrap()
 }
 
-fn get_scenic_score(pos: (usize, usize), map: &[Vec<u32>], rotated: &[Vec<u32>]) -> usize {
+fn get_scenic_score(
+  pos: (usize, usize),
+  map: &[Vec<u32>],
+  rotated: &[Vec<u32>],
+) -> usize {
   let tree = map[pos.0][pos.1];
   let cardinal_view = |(index, &t)| {
     if tree <= t {
