@@ -4,8 +4,7 @@ use super::common::*;
 use super::problem_solver::ProblemSolver;
 
 
-const ROUNDS: usize = 20;
-const RELIEF: i64 = 3;
+const ROUNDS: usize = 10_000;
 
 pub struct PSInput {
   monkeys: Vec<Monkey>,
@@ -36,9 +35,10 @@ impl ProblemSolver for ProblemSolverPattern {
   }
 
   fn solve(input: Self::Input) -> Self::Solution {
+    let lcd: i64 = input.monkeys.iter().map(|m| m.test).product();
     let mut tallies =
       factory_ordered_troup_tallies(input.monkeys, input.items, ROUNDS, |x| {
-        x / RELIEF
+        x % lcd
       });
     let monkey_business =
       (tallies.pop().unwrap() * tallies.pop().unwrap()) as i64;
