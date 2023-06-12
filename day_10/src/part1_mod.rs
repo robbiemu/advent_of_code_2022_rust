@@ -20,7 +20,7 @@ impl ProblemSolver for ProblemSolverPattern {
   fn initialize(lines: impl Iterator<Item = String>) -> Self::Input {
     let commands: Vec<(String, Option<i32>)> = lines
       .enumerate()
-      .map(|(h, l)| interpret_command(l))
+      .map(|(h, l)| interpret_command(h, l))
       .collect();
 
     Self::Input { commands }
