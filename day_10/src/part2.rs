@@ -1,5 +1,5 @@
-mod part1_mod;
-use part1_mod::ProblemSolverPattern;
+mod part2_mod;
+use part2_mod::ProblemSolverPattern;
 mod problem_solver;
 use problem_solver::solve_problem;
 mod common;
