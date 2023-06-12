@@ -19,7 +19,8 @@
     "./day_7/Cargo.toml",
     "./day_8/Cargo.toml",
     "./day_9/Cargo.toml",
-    "./day_10/Cargo.toml"
+    "./day_10/Cargo.toml",
+    "./day_11/Cargo.toml"
   ],
   "rust-analyzer.rustfmt.extraArgs": [
     "--config",
