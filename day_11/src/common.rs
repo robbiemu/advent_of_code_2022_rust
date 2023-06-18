@@ -35,8 +35,9 @@ impl Monkey {
       o[0].chars().next().unwrap(),
       o[1].parse::<i64>().unwrap_or(i64::MAX),
     );
-    let (_, test) = sscanf!(record[3], r"{str:/.*\s/}{i64:/\d+$/}")
-      .expect(invalid_format_error);
+    let test = sscanf!(record[3], r"{str:/.*\s/}{i64:/\d+$/}")
+      .expect(invalid_format_error)
+      .1;
     let result = (
       sscanf!(record[5], r"{str:/.*\s/}{usize:/\d+$/}")
         .expect(invalid_format_error)
@@ -74,7 +75,7 @@ impl Monkey {
       let to = match inv_heaviside(updated_item % self.test) {
         0 => self.result.0,
         1 => self.result.1,
-        x => panic!("{}", x),
+        _ => unreachable!(),
       };
       actions.push((to, updated_item));
     }
@@ -105,14 +106,12 @@ where
   R: Fn(i64) -> i64 + Copy,
 {
   let rates = (0..rounds).fold(vec![0; monkeys.len()], |mut acc, _| {
-    // Move closure
     for (index, monkey) in monkeys.iter_mut().enumerate() {
       let actions = monkey.inspect_items(&items[index], relief);
       acc[index] += items[index].len();
       actions.iter().for_each(|(to, value)| {
         println!("@{}  {}:{}", index, to, *value);
         items[*to].push_front(*value);
-        items[index].pop_back();
       });
       items[index].clear();
     }
