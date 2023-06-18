@@ -17,7 +17,10 @@ const TOGGLE_START_TOOLTIP: &str =
 const CTA_TOGGLE_END: &str = "end";
 const TOGGLE_END_TOOLTIP: &str =
   "Click on the green surface to place the end point.";
+const NO_PATH_LABEL: &str = "No path found!";
+const NO_PATH_TITLE: &str = "No Path";
 
+#[derive(Debug)]
 pub enum Event {
   MapStart,
   MapEnd,
@@ -66,23 +69,51 @@ fn map_events(
   mut commands: Commands,
 ) {
   for event in event_reader.iter() {
+    dbg!(event);
     match event {
       Event::MapStart => {
         local.clear();
         local.current_state = Some(ModeState::Active);
         if game_state.mode == GameMode::Map {
           if let Some(map) = game_state.map.clone() {
-            eprintln!("rendering map!");
-            let rows = map.size.0;
-            let columns = map.size.1;
-            let rotation_angle = std::f32::consts::PI / 2.0
-              - (rows as f32 / columns as f32).atan();
+            // let rows = map.size.0;
+            // let columns = map.size.1;
+            // let rotation_angle = std::f32::consts::PI / 2.0
+            //   - (rows as f32 / columns as f32).atan();
 
-            let transform = Transform::from_xyz(5.0, 5.0, 5.0)
-              .looking_at(Vec3::ZERO, Vec3::Y)
-              .mul_transform(Transform::from_rotation(Quat::from_rotation_y(
-                rotation_angle,
-              )));
+            // Define the desired camera distance from the target position
+            let camera_distance = map.size.1.max(map.size.0) as f32 * 1.5;
+            let light_distance = map.size.1.max(map.size.0) as f32 * 3.0;
+
+            // Calculate the camera position based on the target position and distance
+            // Define the target position at the center of the map
+            let target_position =
+              Vec3::new(map.size.1 as f32 / 2.0, map.size.0 as f32 / 2.0, 0.0);
+            let camera_position = target_position
+              + Vec3::new(-4.0, -4.0, 3.0).normalize() * camera_distance;
+            let light_position = target_position
+              + Vec3::new(-4.0, -4.0, 3.0).normalize() * light_distance;
+
+            // Create the transform for the camera
+            let rotation_angle = std::f32::consts::PI / 4.0;
+            let camera_transform = Transform::from_xyz(
+              camera_position.x,
+              camera_position.y,
+              camera_position.z,
+            )
+            .looking_at(target_position, Vec3::Z)
+            .mul_transform(Transform::from_rotation(Quat::from_rotation_y(
+              rotation_angle,
+            )));
+            let light_transform = Transform::from_xyz(
+              light_position.x,
+              light_position.y,
+              light_position.z,
+            )
+            .looking_at(target_position, Vec3::Z)
+            .mul_transform(Transform::from_rotation(Quat::from_rotation_y(
+              rotation_angle,
+            )));
 
             // light
             commands.spawn(PointLightBundle {
@@ -91,19 +122,18 @@ fn map_events(
                 shadows_enabled: true,
                 ..default()
               },
-              transform: Transform::from_xyz(4.0, 8.0, 4.0)
-                .looking_at(Vec3::ZERO, Vec3::Y),
+              transform: light_transform,
               ..default()
             });
 
             commands.spawn(Camera3dBundle {
               projection: OrthographicProjection {
                 scale: 3.0,
-                scaling_mode: ScalingMode::FixedVertical(2.0),
+                scaling_mode: ScalingMode::FixedVertical(5.0),
                 ..Default::default()
               }
               .into(),
-              transform,
+              transform: camera_transform,
               ..Default::default()
             });
 
@@ -116,6 +146,40 @@ fn map_events(
               base_color: Color::BISQUE,
               ..Default::default()
             });
+
+            commands.spawn(PbrBundle {
+              mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
+              material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
+              transform: Transform::from_xyz(1.5, 0.5, 1.5),
+              ..default()
+            });
+            commands.spawn(PbrBundle {
+              mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
+              material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
+              transform: Transform::from_xyz(1.5, 0.5, -1.5),
+              ..default()
+            });
+            commands.spawn(PbrBundle {
+              mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
+              material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
+              transform: Transform::from_xyz(-1.5, 0.5, 1.5),
+              ..default()
+            });
+            commands.spawn(PbrBundle {
+              mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
+              material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
+              transform: Transform::from_xyz(-1.5, 0.5, -1.5),
+              ..default()
+            });
+
+            // Define the desired aspect ratio (e.g., 16:9)
+            let aspect_ratio = 16.0 / 9.0;
+
+            // Define the desired width of the view
+            let desired_view_width = 16.0;
+
+            // Calculate the height based on the aspect ratio
+            let desired_view_height = desired_view_width / aspect_ratio;
 
             for (index, ch) in map.flat.iter().enumerate() {
               let x = index % map.size.1;
@@ -144,12 +208,16 @@ fn map_events(
               let custom_mesh_handle = meshes.add(custom_mesh);
 
               // Create the transform for the custom mesh
+              let map_width = map.size.1 as f32;
+              let map_height = map.size.0 as f32;
+              let scale_x = desired_view_width / map_width;
+              let scale_y = desired_view_height / map_height;
+
+              // Adjust the scale of the objects relative to the map size
+              let scale = Vec3::new(scale_x, scale_y, 1.0);
               let translation = Vec3::new(x as f32, y as f32, height);
-              let transform = Transform {
-                translation,
-                scale: Vec3::new(1.0, 1.0, 1.0),
-                ..Default::default()
-              };
+              let transform =
+                Transform { translation, scale, ..Default::default() };
 
               // Create the PBR bundle for the custom mesh with the material handles
               let pbr_bundle = PbrBundle {
@@ -387,19 +455,16 @@ fn render_ui_system(
     };
   });
 
-  egui::CentralPanel::default().show(contexts.ctx_mut(), |ui| {
-    if ui_state.is_showing_no_path_ui {
-      ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
-        egui::Window::new("No Path")
-          .resizable(false)
-          .collapsible(false)
-          .open(&mut ui_state.is_showing_no_path_ui)
-          .show(ui.ctx(), |ui| {
-            ui.label("No path found!");
-          });
+  if ui_state.is_showing_no_path_ui {
+    egui::Window::new(NO_PATH_TITLE)
+      .default_pos(egui::pos2(0.5, 0.5) - egui::vec2(0.5, 0.5))
+      .resizable(false)
+      .collapsible(false)
+      .open(&mut ui_state.is_showing_no_path_ui)
+      .show(contexts.ctx_mut(), |ui| {
+        ui.label(NO_PATH_LABEL);
       });
-    }
-  });
+  }
 }
 
 fn ch_to_height(ch: char) -> f32 {
