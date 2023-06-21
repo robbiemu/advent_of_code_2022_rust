@@ -1,6 +1,12 @@
-use bevy::render::mesh::{Indices, PrimitiveTopology};
-use bevy::window::PrimaryWindow;
-use bevy::{prelude::*, render::camera::ScalingMode};
+use bevy::{
+  input::mouse::{MouseMotion, MouseWheel},
+  prelude::*,
+  render::{
+    camera::ScalingMode,
+    mesh::{Indices, PrimitiveTopology},
+  },
+  window::PrimaryWindow,
+};
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
 use std::collections::HashMap;
 
@@ -19,6 +25,9 @@ const TOGGLE_END_TOOLTIP: &str =
   "Click on the green surface to place the end point.";
 const NO_PATH_LABEL: &str = "No path found!";
 const NO_PATH_TITLE: &str = "No Path";
+
+const DESIRED_VIEW_WIDTH: f32 = 5.0;
+const DESIRED_VIEW_HEIGHT: f32 = 5.0;
 
 #[derive(Debug)]
 pub enum Event {
@@ -52,6 +61,7 @@ impl Plugin for MapPlugin {
     app
       .init_resource::<MapState>()
       .add_plugin(EguiPlugin)
+      .add_system(camera_system)
       .add_system(map_system)
       .add_system(ui_system)
       .add_system(render_ui_system)
@@ -74,188 +84,96 @@ fn map_events(
       Event::MapStart => {
         local.clear();
         local.current_state = Some(ModeState::Active);
+
         if game_state.mode == GameMode::Map {
           if let Some(map) = game_state.map.clone() {
-            // let rows = map.size.0;
-            // let columns = map.size.1;
-            // let rotation_angle = std::f32::consts::PI / 2.0
-            //   - (rows as f32 / columns as f32).atan();
-
-            // Define the desired camera distance from the target position
-            let camera_distance = map.size.1.max(map.size.0) as f32 * 1.5;
-            let light_distance = map.size.1.max(map.size.0) as f32 * 3.0;
-
-            // Calculate the camera position based on the target position and distance
-            // Define the target position at the center of the map
-            let target_position =
-              Vec3::new(map.size.1 as f32 / 2.0, map.size.0 as f32 / 2.0, 0.0);
-            let camera_position = target_position
-              + Vec3::new(-4.0, -4.0, 3.0).normalize() * camera_distance;
-            let light_position = target_position
-              + Vec3::new(-4.0, -4.0, 3.0).normalize() * light_distance;
-
-            // Create the transform for the camera
-            let rotation_angle = std::f32::consts::PI / 4.0;
-            let camera_transform = Transform::from_xyz(
-              camera_position.x,
-              camera_position.y,
-              camera_position.z,
-            )
-            .looking_at(target_position, Vec3::Z)
-            .mul_transform(Transform::from_rotation(Quat::from_rotation_y(
-              rotation_angle,
-            )));
-            let light_transform = Transform::from_xyz(
-              light_position.x,
-              light_position.y,
-              light_position.z,
-            )
-            .looking_at(target_position, Vec3::Z)
-            .mul_transform(Transform::from_rotation(Quat::from_rotation_y(
-              rotation_angle,
-            )));
-
             // light
             commands.spawn(PointLightBundle {
-              point_light: PointLight {
-                intensity: 1500.0,
-                shadows_enabled: true,
-                ..default()
-              },
-              transform: light_transform,
+              transform: Transform::from_xyz(3.0, 8.0, 5.0),
               ..default()
             });
 
+            // camera
             commands.spawn(Camera3dBundle {
               projection: OrthographicProjection {
-                scale: 3.0,
                 scaling_mode: ScalingMode::FixedVertical(5.0),
                 ..Default::default()
               }
               .into(),
-              transform: camera_transform,
+              transform: Transform::from_xyz(5.0, 5.0, 5.0)
+                .looking_at(Vec3::ZERO, Vec3::Y),
               ..Default::default()
             });
 
-            let green_material_handle = materials.add(StandardMaterial {
-              base_color: Color::LIME_GREEN,
-              ..Default::default()
-            });
-
-            let tan_material_handle = materials.add(StandardMaterial {
-              base_color: Color::BISQUE,
-              ..Default::default()
-            });
-
+            // constant plane
             commands.spawn(PbrBundle {
-              mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
-              material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
-              transform: Transform::from_xyz(1.5, 0.5, 1.5),
-              ..default()
-            });
-            commands.spawn(PbrBundle {
-              mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
-              material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
-              transform: Transform::from_xyz(1.5, 0.5, -1.5),
-              ..default()
-            });
-            commands.spawn(PbrBundle {
-              mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
-              material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
-              transform: Transform::from_xyz(-1.5, 0.5, 1.5),
-              ..default()
-            });
-            commands.spawn(PbrBundle {
-              mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
-              material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
-              transform: Transform::from_xyz(-1.5, 0.5, -1.5),
+              mesh: meshes.add(shape::Plane::from_size(5.0).into()),
+              material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
               ..default()
             });
 
-            // Define the desired aspect ratio (e.g., 16:9)
-            let aspect_ratio = 16.0 / 9.0;
+            // for (index, ch) in map.flat.iter().enumerate() {
+            //   let x = index % map.size.1;
+            //   let z = index / map.size.1;
+            //   let height = ch_to_height(*ch);
 
-            // Define the desired width of the view
-            let desired_view_width = 16.0;
+            //   let transform =
+            //     factory_entity_transform(map.size, (x, height, z));
+            //   let custom_mesh = factory_cuboid_mesh(height);
 
-            // Calculate the height based on the aspect ratio
-            let desired_view_height = desired_view_width / aspect_ratio;
+            //   let mesh = meshes.add(custom_mesh.clone());
 
-            for (index, ch) in map.flat.iter().enumerate() {
-              let x = index % map.size.1;
-              let y = index / map.size.1;
+            //   // Create the PBR bundle for the custom mesh with the material handles
+            //   let green = materials.add(StandardMaterial {
+            //     base_color: Color::LIME_GREEN,
+            //     ..Default::default()
+            //   });
 
-              let height = ch_to_height(*ch);
+            //   let tan = materials.add(StandardMaterial {
+            //     base_color: Color::BISQUE,
+            //     ..Default::default()
+            //   });
 
-              // Create the vertices of the custom 3D rectangle
-              let vertices: [Vec3; 4] = [
-                Vec3::new(-0.5, -0.5, 0.0),
-                Vec3::new(0.5, -0.5, 0.0),
-                Vec3::new(0.5, 0.5, height),
-                Vec3::new(-0.5, 0.5, height),
-              ];
+            //   let entity = commands
+            //     .spawn(PbrBundle {
+            //       mesh,
+            //       transform,
+            //       material: tan.clone(),
+            //       ..Default::default()
+            //     })
+            //     .with_children(|parent| {
+            //       if let Some(top_surface_vertices) =
+            //         extract_top_surface_vertices(&custom_mesh)
+            //       {
+            //         let plane_mesh = create_plane_mesh(top_surface_vertices);
+            //         let surface_transform =
+            //           transform * Transform::from_translation(Vec3::Y * f32::EPSILON);
+            //         parent.spawn(PbrBundle {
+            //           mesh: meshes.add(plane_mesh),
+            //           material: green.clone(),
+            //           transform: surface_transform,
+            //           ..Default::default()
+            //         });
+            //       }
+            //     })
+            //     .id();
 
-              // Create the indices of the custom 3D rectangle
-              let indices: [u32; 6] = [0, 1, 2, 0, 2, 3];
+            //   local.spawned_entities.push(entity);
+            //   local
+            //     .original_materials
+            //     .insert(entity, (green.clone(), tan.clone()));
+            // }
 
-              // Create a new mesh with the custom vertices and indices
-              let mut custom_mesh = Mesh::new(PrimitiveTopology::TriangleList);
-              custom_mesh
-                .insert_attribute(Mesh::ATTRIBUTE_POSITION, vertices.to_vec());
-              custom_mesh.set_indices(Some(Indices::U32(indices.to_vec())));
+            // // show_map(&mut local, &mut commands);
+            // if let Some(gs_map) = game_state.map.clone() {
+            //   if gs_map.start.is_some() {
+            //     show_start_highlight(&mut local, &game_state, &mut materials);
+            //   }
 
-              // Add the custom mesh to the mesh assets
-              let custom_mesh_handle = meshes.add(custom_mesh);
-
-              // Create the transform for the custom mesh
-              let map_width = map.size.1 as f32;
-              let map_height = map.size.0 as f32;
-              let scale_x = desired_view_width / map_width;
-              let scale_y = desired_view_height / map_height;
-
-              // Adjust the scale of the objects relative to the map size
-              let scale = Vec3::new(scale_x, scale_y, 1.0);
-              let translation = Vec3::new(x as f32, y as f32, height);
-              let transform =
-                Transform { translation, scale, ..Default::default() };
-
-              // Create the PBR bundle for the custom mesh with the material handles
-              let pbr_bundle = PbrBundle {
-                mesh: custom_mesh_handle,
-                material: green_material_handle.clone(),
-                transform,
-                ..Default::default()
-              };
-
-              // Spawn the entity with the PBR bundle
-              let entity = commands
-                .spawn(pbr_bundle)
-                .with_children(|parent| {
-                  // Attach the tan material to the custom mesh
-                  parent.spawn(PbrBundle {
-                    material: tan_material_handle.clone(),
-                    ..Default::default()
-                  });
-                })
-                .id();
-
-              local.spawned_entities.push(entity);
-              local.original_materials.insert(
-                entity,
-                (green_material_handle.clone(), tan_material_handle.clone()),
-              );
-            }
-
-            show_map(&mut local, &mut commands);
-            if let Some(gs_map) = game_state.map.clone() {
-              if gs_map.start.is_some() {
-                show_start_highlight(&mut local, &game_state, &mut materials);
-              }
-
-              if gs_map.end.is_some() {
-                show_end_highlight(&mut local, &game_state, &mut materials);
-              }
-            }
+            //   if gs_map.end.is_some() {
+            //     show_end_highlight(&mut local, &game_state, &mut materials);
+            //   }
+            // }
           }
         } else if local.is_showing_map {
           hide_map(&mut local, &mut commands);
@@ -467,6 +385,178 @@ fn render_ui_system(
   }
 }
 
+fn camera_system(
+  game_state: Res<GameState>,
+  local: Res<MapState>,
+  mut query: Query<&mut Transform, With<Camera>>,
+  window_query: Query<&Window, With<PrimaryWindow>>,
+  mouse_button_input: Res<Input<MouseButton>>,
+  mut mouse_motion_events: EventReader<MouseMotion>,
+  mut mouse_wheel_events: EventReader<MouseWheel>,
+) {
+  if !(game_state.mode == GameMode::Map
+    && Some(ModeState::Active) == local.current_state)
+  {
+    return;
+  }
+
+  let window = window_query.get_single().unwrap();
+  if window.cursor_position().is_some() {
+    for mut transform in query.iter_mut() {
+      let window_size = Vec2::new(window.width(), window.height());
+      let mut total_rotation = Quat::IDENTITY;
+      if mouse_button_input.pressed(MouseButton::Left) {
+        eprintln!("left mouse dragged");
+        let rotation_speed = 0.3;
+        for event in mouse_motion_events.iter() {
+          let delta = event.delta / window_size;
+          total_rotation *= Quat::from_rotation_y(-delta.y * rotation_speed);
+        }
+      }
+
+      // Process mouse wheel events
+      let zoom_factor = 0.1;
+      for event in mouse_wheel_events.iter() {
+        eprintln!("mouse wheel rotated");
+        // Zoom factor determines how much the camera zooms in or out
+
+        // Adjust the camera's scale based on the scroll direction
+        if event.y.abs() > f32::EPSILON {
+          let zoom_delta = event.y * zoom_factor;
+          let current_scale = transform.scale;
+          let new_scale = current_scale * (1.0 + zoom_delta);
+          transform.scale = new_scale;
+        }
+      }
+
+      if total_rotation != Quat::IDENTITY {
+        let current_rotation = transform.rotation;
+        let new_rotation = current_rotation * total_rotation;
+        transform.rotation = new_rotation;
+      }
+    }
+  }
+}
+
+fn factory_entity_transform(
+  map_size: (usize, usize),
+  xyz: (usize, f32, usize),
+) -> Transform {
+  let entity_dim_x = DESIRED_VIEW_WIDTH / (map_size.1 - 1) as f32;
+  let entity_dim_z = DESIRED_VIEW_HEIGHT / (map_size.0 - 1) as f32;
+
+  let scale = Vec3::new(entity_dim_x, xyz.1, entity_dim_z);
+
+  // Calculate the translation based on the entity position relative to the center
+  let translation_x =
+    (xyz.0 as f32 - (map_size.1 - 1) as f32 / 2.0) * entity_dim_x;
+  let translation_z =
+    (xyz.2 as f32 - (map_size.0 - 1) as f32 / 2.0) * entity_dim_z;
+  let translation = Vec3::new(translation_x, xyz.1, translation_z);
+
+  dbg!(Transform { translation, scale, ..Default::default() });
+  Transform { translation, scale, ..Default::default() }
+}
+
+fn factory_cuboid_mesh(height: f32) -> Mesh {
+  let vertices: [Vec3; 8] = [
+    Vec3::new(-0.5, 0.0, -0.5),    // 0: Bottom Left Back
+    Vec3::new(0.5, 0.0, -0.5),     // 1: Bottom Right Back
+    Vec3::new(0.5, 0.0, 0.5),      // 2: Bottom Right Front
+    Vec3::new(-0.5, 0.0, 0.5),     // 3: Bottom Left Front
+    Vec3::new(-0.5, height, -0.5), // 4: Top Left Back
+    Vec3::new(0.5, height, -0.5),  // 5: Top Right Back
+    Vec3::new(0.5, height, 0.5),   // 6: Top Right Front
+    Vec3::new(-0.5, height, 0.5),  // 7: Top Left Front
+  ];
+
+  let indices: [u32; 36] = [
+    0, 3, 2, 0, 2, 1, // Side 1: Bottom
+    1, 2, 6, 1, 6, 5, // Side 2: Right
+    5, 6, 7, 5, 7, 4, // Side 3: Top
+    4, 7, 3, 4, 3, 0, // Side 4: Left
+    0, 1, 5, 0, 5, 4, // Side 5: Back
+    3, 7, 6, 3, 6, 2, // Side 6: Front
+  ];
+
+  let mut custom_mesh = Mesh::new(PrimitiveTopology::TriangleList);
+  custom_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, vertices.to_vec());
+  custom_mesh.set_indices(Some(Indices::U32(indices.to_vec())));
+
+  custom_mesh.duplicate_vertices();
+  custom_mesh.compute_flat_normals();
+
+  custom_mesh
+}
+
+fn extract_top_surface_vertices(mesh: &Mesh) -> Option<[[Vec3; 3]; 2]> {
+  let positions = mesh.attribute(Mesh::ATTRIBUTE_POSITION)?;
+
+  let vertex_count = positions.len();
+  let indices = (0..vertex_count).collect::<Vec<usize>>();
+
+  let mut top_surface_vertices = [[Vec3::ZERO; 3]; 2];
+  let mut surface_count = 0;
+
+  let positions_slice = positions.as_float3()?;
+
+  let top_face_indices = (0..vertex_count)
+    .step_by(3) // Assumes triangles
+    .filter_map(|i| {
+      let idx1 = indices[i];
+      let idx2 = indices[i + 1];
+      let idx3 = indices[i + 2];
+
+      let p1 = positions_slice.get(idx1)?;
+      let p2 = positions_slice.get(idx2)?;
+      let p3 = positions_slice.get(idx3)?;
+
+      if p1[1] > 0.0 && p2[1] > 0.0 && p3[1] > 0.0 {
+        Some([
+          Vec3::new(p1[0], p1[1], p1[2]),
+          Vec3::new(p2[0], p2[1], p2[2]),
+          Vec3::new(p3[0], p3[1], p3[2]),
+        ])
+      } else {
+        None
+      }
+    });
+
+  for face in top_face_indices {
+    if surface_count >= 2 {
+      break;
+    }
+    top_surface_vertices[surface_count] = face;
+    surface_count += 1;
+  }
+
+  if surface_count < 2 {
+    return None;
+  }
+
+  Some(top_surface_vertices)
+}
+
+fn create_plane_mesh(vertices: [[Vec3; 3]; 2]) -> Mesh {
+  let mut positions = Vec::new();
+  let mut indices = Vec::new();
+
+  for triangle_vertices in vertices.iter() {
+    let base_index = positions.len() as u32;
+
+    for vertex in triangle_vertices.iter() {
+      positions.push(vertex.clone());
+      indices.push(base_index + indices.len() as u32);
+    }
+  }
+
+  let mut plane_mesh = Mesh::new(PrimitiveTopology::TriangleList);
+  plane_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions);
+  plane_mesh.set_indices(Some(Indices::U32(indices)));
+
+  plane_mesh
+}
+
 fn ch_to_height(ch: char) -> f32 {
   let min_height = 0.0;
   let max_height = 1.0;
@@ -637,23 +727,6 @@ fn render_path(
 
     local.is_rendering_path = true;
   }
-}
-
-fn show_map(local: &mut MapState, commands: &mut Commands) {
-  for &entity in &local.spawned_entities {
-    if let Some((green_material, tan_material)) =
-      local.original_materials.get(&entity)
-    {
-      commands.entity(entity).insert(green_material.clone());
-      commands.entity(entity).with_children(|parent| {
-        parent.spawn(PbrBundle {
-          material: tan_material.clone(),
-          ..Default::default()
-        });
-      });
-    }
-  }
-  local.is_showing_map = true;
 }
 
 fn hide_map(local: &mut MapState, commands: &mut Commands) {
