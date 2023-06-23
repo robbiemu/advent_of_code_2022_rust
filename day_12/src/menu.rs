@@ -130,10 +130,9 @@ fn menu_events(
           let map = factory_map(input.clone());
           if map.is_some() {
             game_state.map = map;
-            leave_menu_mode(&mut local, &mut game_state);
+            game_state.mode = GameMode::Map;
           }
         }
-        game_state.mode = GameMode::Map;
       }
     }
   }
