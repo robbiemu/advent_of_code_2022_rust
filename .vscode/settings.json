@@ -20,8 +20,10 @@
     "./day_8/Cargo.toml",
     "./day_9/Cargo.toml",
     "./day_10/Cargo.toml",
-    "./day_11/Cargo.toml"
+    "./day_11/Cargo.toml",
+    "./day_12/Cargo.toml"
   ],
+  "rust-analyzer.check.features": "all",
   "rust-analyzer.rustfmt.extraArgs": [
     "--config",
     "tab_spaces=2",
