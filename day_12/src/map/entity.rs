@@ -16,11 +16,7 @@ pub fn factory_heightmap_entity(
   x: usize,
   height: f32,
   z: usize,
-) -> (
-  Entity,
-  Transform,
-  (Handle<StandardMaterial>, Handle<StandardMaterial>),
-) {
+) -> (Entity, (Handle<StandardMaterial>, Handle<StandardMaterial>)) {
   let transform = factory_entity_transform(map.size, (x, height, z));
   let custom_mesh = factory_cuboid_mesh(height);
 
@@ -68,7 +64,7 @@ pub fn factory_heightmap_entity(
     })
     .id();
 
-  (entity, transform, (green, tan))
+  (entity, (green, tan))
 }
 
 fn factory_cuboid_mesh(height: f32) -> Mesh {

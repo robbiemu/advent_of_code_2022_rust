@@ -34,7 +34,6 @@ pub enum Event {
 #[derive(Resource, Default, Debug)]
 pub struct MapState {
   spawned_entities: Vec<Entity>,
-  original_transforms: HashMap<Entity, Transform>,
   original_materials:
     HashMap<Entity, (Handle<StandardMaterial>, Handle<StandardMaterial>)>,
   path_entities: Vec<Entity>,
@@ -101,7 +100,8 @@ fn map_events(
               let z = index / map.size.1;
               let height = ch_to_height(*ch);
 
-              let (entity, transform, mats) = factory_heightmap_entity(
+              let (entity, mats) = factory_heightmap_entity(
+                //  &mut entities_query,
                 &mut commands,
                 &mut meshes,
                 &mut materials,
@@ -112,7 +112,6 @@ fn map_events(
               );
 
               local.spawned_entities.push(entity);
-              local.original_transforms.insert(entity, transform);
               local.original_materials.insert(entity, mats);
             }
 
