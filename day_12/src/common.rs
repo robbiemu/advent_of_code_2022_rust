@@ -1,5 +1,8 @@
 use petgraph::prelude::*;
-use petgraph::{algo::astar, Graph};
+use petgraph::{
+  algo::{astar, dijkstra},
+  Graph,
+};
 
 pub fn factory_graph_from_map(
   map: Vec<String>,
@@ -75,6 +78,7 @@ fn factory_graph(
   graph
 }
 
+#[allow(dead_code)]
 pub fn find_path_part1(
   graph: Graph<usize, ()>,
   start_index: usize,
@@ -92,4 +96,43 @@ pub fn find_path_part1(
   dbg!(start, end);
 
   astar(&graph, start, |curr| curr == end, |_| 1, |_| 0)
+}
+
+#[allow(dead_code)]
+pub fn find_path_part2(
+  mut graph: Graph<usize, ()>,
+  flattened: Vec<char>,
+  start_index: usize,
+  end_index: usize,
+) -> Option<(i32, Vec<NodeIndex>)> {
+  let start = graph
+    .node_indices()
+    .find(|i| graph[*i] == start_index)
+    .unwrap();
+  let end = graph
+    .node_indices()
+    .find(|i| graph[*i] == end_index)
+    .unwrap();
+
+  dbg!(start, end);
+
+  graph.reverse();
+  let distances = dijkstra(&graph, end, None, |_| 1);
+  let best = graph
+    .node_indices()
+    .fold((u32::MAX, None), |acc, node| {
+      if distances.contains_key(&node)
+        && distances[&node] < acc.0
+        && flattened[node.index()] == 'a'
+      {
+        (distances[&node], Some(node))
+      } else {
+        acc
+      }
+    })
+    .1
+    .unwrap_or_default();
+  dbg!(&distances, best);
+  graph.reverse();
+  astar(&graph, best, |curr| curr == end, |_| 1, |_| 0)
 }

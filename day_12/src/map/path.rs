@@ -18,6 +18,7 @@ pub fn render_path(
   clear_path(commands, local);
 
   if let Some((_, path)) = &map.solution {
+    let mut prev_position: Option<Vec3> = None;
     let grey_material_handle = materials.add(StandardMaterial {
       base_color: Color::SILVER,
       ..Default::default()
@@ -65,11 +66,46 @@ pub fn render_path(
 
       let mut child_entity_commands = commands.spawn(pbr_bundle);
       child_entity_commands.set_parent(parent_entity);
-      let child_entity = child_entity_commands.id();
-      commands
-        .entity(parent_entity)
-        .push_children(&[child_entity]);
-      local.path_entities.push(child_entity);
+      let node_entity = child_entity_commands.id();
+      commands.entity(parent_entity).push_children(&[node_entity]);
+      local.path_entities.push(node_entity);
+
+      if let Some(prev_pos) = prev_position {
+        let rectangle_vertices = vec![
+          Vec3::new(-half_width, height, 0.0),
+          Vec3::new(half_width, height, 0.0),
+          Vec3::new(half_width, prev_pos.y, 0.0),
+          Vec3::new(-half_width, prev_pos.y, 0.0),
+        ];
+
+        let rectangle_indices = vec![0, 1, 2, 3];
+
+        let mut rectangle_mesh = Mesh::new(PrimitiveTopology::TriangleList);
+        rectangle_mesh
+          .insert_attribute(Mesh::ATTRIBUTE_POSITION, rectangle_vertices);
+        rectangle_mesh.set_indices(Some(Indices::U32(rectangle_indices)));
+
+        let rectangle_mesh_handle = meshes.add(rectangle_mesh.clone());
+
+        // Create the PBR bundle for the rectangle mesh with the material handle
+        let rectangle_bundle = PbrBundle {
+          mesh: rectangle_mesh_handle,
+          material: grey_material_handle.clone(),
+          transform: Transform::default(),
+          ..Default::default()
+        };
+
+        // Create the rectangle entity and set its parent to the previous path entity
+        let rectangle_entity = commands.spawn(rectangle_bundle).id();
+        commands.entity(node_entity).set_parent(rectangle_entity);
+        commands
+          .entity(node_entity)
+          .push_children(&[rectangle_entity]);
+
+        // Add the rectangle entity to the path entities
+        local.path_entities.push(rectangle_entity);
+      }
+      prev_position = Some(Vec3::new(0.0, height + 0.001, 0.0));
     }
 
     local.is_rendering_path = true;
