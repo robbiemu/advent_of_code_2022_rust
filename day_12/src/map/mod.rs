@@ -8,7 +8,8 @@ use std::collections::HashMap;
 
 use super::{GameMode, GameState};
 use crate::bevy_common::{Clear, ModeState};
-use crate::common::find_path_part1;
+use crate::common::{find_path_part1, find_path_part2};
+use crate::SolveMode;
 mod constants;
 use constants::*;
 mod entity;
@@ -153,13 +154,45 @@ fn map_events(
         hide_end_highlight(&mut local, &game_state, &mut materials);
       }
       Event::FindPath => {
-        if let Some(gs_map) = game_state.map.as_ref() {
-          if !(gs_map.start.is_none() || gs_map.end.is_none()) {
-            let solution_opt = find_path_part1(
-              gs_map.graph.clone(),
-              gs_map.start.unwrap(),
-              gs_map.end.unwrap(),
-            );
+        let mut cloned_game_state = game_state.clone();
+        if let Some(mut gs_map) = game_state.map.as_mut() {
+          let solve_mode = cloned_game_state.solve_mode.clone();
+          let start_opt = gs_map.start;
+          let end_opt = gs_map.end;
+          if let (Some(start), Some(end)) = (start_opt, end_opt) {
+            let solution_opt = match solve_mode {
+              SolveMode::Part1 => {
+                find_path_part1(gs_map.graph.clone(), start, end)
+              }
+              SolveMode::Part2 => {
+                let (path, new_start) = find_path_part2(
+                  gs_map.graph.clone(),
+                  gs_map.flat.clone(),
+                  start,
+                  end,
+                );
+
+                if let Some(p) = &path {
+                  if p.0 > 0 && Some(new_start) != gs_map.start {
+                    hide_start_highlight(
+                      &mut local,
+                      &cloned_game_state,
+                      &mut materials,
+                    );
+                    gs_map.start = Some(new_start);
+                    cloned_game_state.map = Some(gs_map.clone());
+                    show_start_highlight(
+                      &mut local,
+                      &cloned_game_state,
+                      &mut materials,
+                    );
+                  }
+                }
+
+                path
+              }
+            };
+
             if let Some((distance, path)) = solution_opt {
               let mut updated_map = gs_map.clone();
               updated_map.solution = Some((distance, path));

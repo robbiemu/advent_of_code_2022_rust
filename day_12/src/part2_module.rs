@@ -37,10 +37,10 @@ impl ProblemSolver for ProblemSolverPattern {
 
   fn solve(input: Self::Input) -> Self::Solution {
     let mut flattened = input.flattened.clone();
-    let path =
+    let (path, start) =
       find_path_part2(input.graph, input.flattened, input.start, input.end);
 
-    flattened[input.start] = 'S';
+    flattened[start] = 'S';
     flattened[input.end] = 'E';
 
     Self::Solution { path, /* end, */ flattened }

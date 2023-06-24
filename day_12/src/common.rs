@@ -104,7 +104,7 @@ pub fn find_path_part2(
   flattened: Vec<char>,
   start_index: usize,
   end_index: usize,
-) -> Option<(i32, Vec<NodeIndex>)> {
+) -> (Option<(i32, Vec<NodeIndex>)>, usize) {
   let start = graph
     .node_indices()
     .find(|i| graph[*i] == start_index)
@@ -134,5 +134,8 @@ pub fn find_path_part2(
     .unwrap_or_default();
   dbg!(&distances, best);
   graph.reverse();
-  astar(&graph, best, |curr| curr == end, |_| 1, |_| 0)
+  (
+    astar(&graph, best, |curr| curr == end, |_| 1, |_| 1),
+    best.index(),
+  )
 }
