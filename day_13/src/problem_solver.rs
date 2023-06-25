@@ -2,7 +2,7 @@ use std::fs::File;
 use std::io::{BufRead, BufReader, Lines};
 use std::path::Path;
 use std::process;
-use std::result::Result;
+
 
 pub trait ProblemSolver {
   type Input;
@@ -24,12 +24,12 @@ pub fn solve_problem<T: ProblemSolver>() {
   let input_filename = &args[1];
   match read_lines(input_filename) {
     Ok(lines) => {
-      let input = T::initialize(lines.map(Result::unwrap));
+      let input = T::initialize(lines.map(|l| l.unwrap()));
       let solution = T::solve(input);
       T::output(solution);
     }
     Err(err) => {
-      eprintln!("Failed to open input file: {err}");
+      eprintln!("Failed to open input file: {}", err);
       process::exit(1);
     }
   }

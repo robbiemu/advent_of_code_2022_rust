@@ -116,7 +116,6 @@ fn map_events(
               local.original_materials.insert(entity, mats);
             }
 
-            // show_map(&mut local, &mut commands);
             if let Some(gs_map) = game_state.map.clone() {
               if gs_map.start.is_some() {
                 show_start_highlight(&mut local, &game_state, &mut materials);
