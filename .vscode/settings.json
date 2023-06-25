@@ -6,6 +6,7 @@
   },
   "rust-analyzer.inlayHints.bindingModeHints.enable": true,
   "rust-analyzer.inlayHints.typeHints.enable": false,
+  "rust-analyzer.check.features": "all",
   "rust-analyzer.check.command": "clippy",
   "rust-analyzer.checkOnSave": true,
   "rust-analyzer.cargo.buildScripts.overrideCommand": null,
@@ -21,9 +22,9 @@
     "./day_9/Cargo.toml",
     "./day_10/Cargo.toml",
     "./day_11/Cargo.toml",
-    "./day_12/Cargo.toml"
+    "./day_12/Cargo.toml",
+    "./day_13/Cargo.toml"
   ],
-  "rust-analyzer.check.features": "all",
   "rust-analyzer.rustfmt.extraArgs": [
     "--config",
     "tab_spaces=2",
