@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 crossterm = "0.26.1"
 pancurses = "0.17.0"
+linked_hash_set = "0.1.4"
 tokio = { version = "1.28.2", features = [ "full" ] }
 async-trait = "0.1.68"
 rayon = "1.7.0"

@@ -1,9 +1,12 @@
 mod part2_module;
 use part2_module::ProblemSolverPattern;
-mod problem_solver;
-use problem_solver::solve_problem;
+mod problem_solver_async;
+use problem_solver_async::solve_problem;
+mod common;
+mod curses;
 
 
-fn main() {
-  solve_problem::<ProblemSolverPattern>();
+#[tokio::main]
+async fn main() {
+  solve_problem::<ProblemSolverPattern>().await;
 }

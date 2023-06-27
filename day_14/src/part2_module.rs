@@ -1,31 +1,64 @@
-use super::problem_solver::ProblemSolver;
+use async_trait::async_trait;
 
+use super::common::{prelude::*, read_paths};
+use super::curses::Curses;
+use super::problem_solver_async::ProblemSolver;
+use crate::common::render_solution;
+
+
+const SAND_ENTRY: (usize, usize) = (500, 0);
+const STEP: u64 = 10 / 6;
 
 pub struct PSInput {
-  // Define the structure of input data for the problem
+  rock_structures: Vec<PathSegment>,
+  sand_entry: Coord,
 }
 
 pub struct PSSolution {
-  // Define the structure of the problem solution
+  rock_structures: Vec<PathSegment>,
+  sand_entry: Coord,
+  units_of_sand: u32,
 }
 
 pub struct ProblemSolverPattern;
 
+#[async_trait]
 impl ProblemSolver for ProblemSolverPattern {
   type Input = PSInput;
   type Solution = PSSolution;
 
   fn initialize(lines: impl Iterator<Item = String>) -> Self::Input {
-    /* Implement initialization logic to prepare the input to this
-    solver */
-    unimplemented!()
+    let rock_structures = read_paths(lines);
+    PSInput { rock_structures, sand_entry: SAND_ENTRY }
   }
 
-  fn solve(input: Self::Input) -> Self::Solution {
-    unimplemented!() // Implement logic to solve this problem
+  async fn solve_async(input: Self::Input) -> Self::Solution {
+    let curses = Curses::new();
+    curses.set_limit(true).await;
+    curses.set_paths(input.rock_structures.clone()).await;
+    curses.set_sand_entry(input.sand_entry).await;
+    let mut i = 1;
+    while curses.release_sand(0).await.is_some() {
+      i += 1;
+    }
+
+    Self::Solution {
+      rock_structures: input.rock_structures,
+      sand_entry: input.sand_entry,
+      units_of_sand: i,
+    }
   }
 
-  fn output(solution: Self::Solution) {
-    unimplemented!() // Implement output logic specific to this problem
+  async fn output_async(solution: Self::Solution) {
+    // render_solution(
+    //   solution.rock_structures,
+    //   solution.sand_entry,
+    //   solution.units_of_sand,
+    //   STEP,
+    //   true,
+    // )
+    // .await;
+
+    println!("units of sand: {}", solution.units_of_sand);
   }
 }
