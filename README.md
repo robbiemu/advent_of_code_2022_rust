@@ -37,8 +37,13 @@ Publishing to google [cloud function](https://cloud.google.com/run/docs/quicksta
 
 ### Day 12
 
-Big day for me, exploring game programming with [bevy](https://bevyengine.org/). Also got to set up features for the first time. Did it as an isomorphic visualization and also allowed the user to set start and end points.
+Big day for me, exploring game programming with [bevy](https://bevyengine.org/). Also got to set up [features](https://doc.rust-lang.org/cargo/reference/features.html) for the first time. Did it as an isomorphic visualization and also allowed the user to set start and end points.
+![screenshot](assets/day_12.png)
 
 ### Day 14
 
-I made a not-terrible visualization in [pancurses](https://github.com/ihalila/pancurses). Although this task does not really need it, I built it multi-threaded, which turned into a bit of a challenge because of the underlying curses library (which has no public repository).
+I made a not-terrible visualization in [pancurses](https://github.com/ihalila/pancurses).
+
+![screenshot](assets/day_14.png)
+
+Although this task does not really need it, I built it multi-threaded, which turned into a bit of a challenge because of the underlying curses library (which has no public repository).
