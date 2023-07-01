@@ -41,7 +41,7 @@ pub fn rows_input(cx: Scope) -> Element {
           log::info!("clicked");
           if let Some(j) = row_selected {
             log::info!("selected: {j}");
-            let count = count_row((j as isize - b_min) as usize, bounds, &records);
+            let count = count_row(j, bounds, &records);
             part1_state.write().row_count = Some(count);
           }
         },

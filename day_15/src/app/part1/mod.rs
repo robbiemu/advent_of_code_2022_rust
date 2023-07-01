@@ -5,8 +5,8 @@ use super::beacon::beacon_entity;
 use super::sensor_and_container::sensor_and_container;
 use super::AppState;
 use crate::common::{
-  derive_bounds, get_bounded_coordinate_indices, manhattan_distance,
-  parse_line, prelude::*, solve_to,
+  derive_bounds, extend_coord_ranges, get_bounded_coordinate_indices,
+  manhattan_distance, parse_line, prelude::*, solve_to,
 };
 mod rows_select;
 use rows_select::rows_select;
@@ -94,35 +94,32 @@ pub fn part_1(cx: Scope) -> Element {
 }
 
 pub fn count_row(index: usize, bounds: Bounds, records: &[Record]) -> usize {
-  let (x, y) = bounds.get_dims();
-  let mut row: Vec<bool> = vec![false; x as usize];
-  log::info!("map:{x},{y}");
+  let mut beacons: HashSet<usize> = HashSet::new();
+  let mut ranges: Vec<Coord> = Vec::new();
   records.iter().for_each(|record| {
+    let (sensor, beacon) = record;
+    let (bx, by) = get_bounded_coordinate_indices(&bounds, beacon).unwrap();
+    if by == index {
+      log::warn!("beacon found on x {bx}");
+      beacons.insert(bx);
+    }
+
     let path_length = manhattan_distance(record);
-    let (sensor, _beacon) = record;
-    let (x, y) = get_bounded_coordinate_indices(&bounds, sensor);
+    let (x, y) = get_bounded_coordinate_indices(&bounds, sensor).unwrap();
     if y + path_length >= index && y - path_length <= index {
       //aco((x, y), path_length, &mut map);
-      log::info!(
-        "! solving ({},{})±{} : index {}",
-        x as isize + bounds.0 .0,
-        y as isize + bounds.0 .1,
-        path_length,
-        index as isize + bounds.0 .1
-      );
-      solve_to((x, y), index, path_length, bounds, &mut row);
-    } else {
-      log::info!(
-        "skipping ({},{})±{} too far from index {}",
-        x as isize + bounds.0 .0,
-        y as isize + bounds.0 .1,
-        path_length,
-        index as isize + bounds.0 .1
-      );
+      let range = solve_to((x, y), index, path_length, bounds);
+      ranges = extend_coord_ranges(range, &mut ranges);
+      log::info!("{:?}", ranges);
     }
   });
 
-  log::info!("{:?}", row);
+  log::info!(
+    "ranges found: {:?} beacons found: {:?}",
+    ranges,
+    beacons.len()
+  );
 
-  row.iter().filter(|&&visited| visited).count()
+  (ranges.iter().fold(0, |acc, cur| acc + cur.1 - cur.0 + 1)
+    - beacons.len() as isize) as usize
 }

@@ -13,14 +13,6 @@ pub mod prelude {
         Entity::Beacon(coord) | Entity::Sensor(coord) => *coord,
       }
     }
-
-    pub fn get_coord_indices(&self) -> (usize, usize) {
-      match self {
-        Entity::Beacon(coord) | Entity::Sensor(coord) => {
-          (coord.0 as usize, coord.1 as usize)
-        }
-      }
-    }
   }
 
   pub type Record = (Entity, Entity);
@@ -48,7 +40,6 @@ pub mod prelude {
   }
 }
 
-use dioxus::html::p;
 use sscanf::sscanf;
 use std::{
   cmp::{max, min},
@@ -123,14 +114,18 @@ pub fn manhattan_distance(record: &Record) -> usize {
 pub fn get_bounded_coordinate_indices(
   bounds: &Bounds,
   entity: &Entity,
-) -> (usize, usize) {
-  let (mut x, mut y) = entity.get_coord_indices();
-  if (x as isize - bounds.0 .0 >= 0) && (y as isize - bounds.0 .1 >= 0) {
-    x = (x as isize - bounds.0 .0) as usize;
-    y = (y as isize - bounds.0 .1) as usize;
+) -> Option<(usize, usize)> {
+  let (a, b) = entity.get_coord();
+  let x: usize;
+  let y: usize;
+  if (a - bounds.0 .0 >= 0) && (b - bounds.0 .1 >= 0) {
+    x = (a - bounds.0 .0) as usize;
+    y = (b - bounds.0 .1) as usize;
+
+    return Some((x, y));
   }
 
-  (x, y)
+  None
 }
 
 // not quite right
@@ -177,8 +172,7 @@ pub fn solve_to(
   target_y: usize,
   path_length: usize,
   bounds: Bounds,
-  row: &mut [bool],
-) {
+) -> Coord {
   let breadth = (origin.1 as isize - target_y as isize).unsigned_abs();
   let extent = path_length - breadth;
   log::info!(
@@ -186,5 +180,126 @@ pub fn solve_to(
     (origin.0 as isize - extent as isize + bounds.0 .0
       ..=origin.0 as isize + extent as isize + bounds.0 .0)
   );
-  (origin.0 - extent..=origin.0 + extent).for_each(|x| row[x] = true);
+  ((origin.0 - extent) as isize, (origin.0 + extent) as isize)
+}
+
+pub fn extend_coord_ranges(range: Coord, ranges: &mut [Coord]) -> Vec<Coord> {
+  let mut left = usize::MAX;
+  let mut right = usize::MAX;
+  let mut current_merge = usize::MAX;
+  let mut exclude: Vec<usize> = Vec::new();
+
+  for (i, r) in ranges.iter().enumerate() {
+    log::info!("considering: target {:?} origin {:?}", range, r);
+
+    match check_overlap(*r, range) {
+      Some(Overlap::Left) => {
+        log::info!("found outer left: target {:?} origin {:?}", range, r);
+        left = i;
+        current_merge = i;
+      }
+      Some(Overlap::Right) => {
+        log::info!("found outer right: target {:?} origin {:?}", range, r);
+        right = i;
+        current_merge = i;
+      }
+      Some(Overlap::Contains) => {
+        log::info!(
+          "found outer contains range: target {:?} origin {:?}",
+          range,
+          r
+        );
+        right = i;
+        break;
+      }
+      Some(Overlap::Contained) => {
+        log::info!(
+          "found outer contained in range: target {:?} origin {:?}",
+          range,
+          r
+        );
+        exclude.push(i);
+        break;
+      }
+      None => (),
+    }
+
+    if current_merge != usize::MAX {
+      for (j, r2) in ranges.iter().enumerate().skip(i + 1) {
+        match check_overlap(*r2, range) {
+          Some(Overlap::Left) => {
+            log::info!("found inner left: target {:?} origin {:?}", range, r2);
+            left = j;
+            break;
+          }
+          Some(Overlap::Right) => {
+            log::info!("found inner right: target {:?} origin {:?}", range, r2);
+            right = j;
+            break;
+          }
+          Some(Overlap::Contained) => {
+            log::info!(
+              "found inner contained: target {:?} origin {:?}",
+              range,
+              r2
+            );
+            exclude.push(j);
+          }
+          _ => (),
+        }
+      }
+      break;
+    }
+  }
+
+  let mut merged_ranges: Vec<Coord> = Vec::new();
+  let mut working_range = range;
+  if left != usize::MAX {
+    working_range = merge_coord_range(ranges[left], working_range);
+  }
+  if right != usize::MAX {
+    working_range = merge_coord_range(ranges[right], working_range);
+  }
+  merged_ranges.push(working_range);
+  merged_ranges.extend(
+    ranges
+      .iter()
+      .enumerate()
+      .filter(|(i, _)| *i != left && *i != right && !exclude.contains(i))
+      .map(|(_, r)| *r),
+  );
+
+  merged_ranges
+}
+
+fn merge_coord_range(left: Coord, right: Coord) -> Coord {
+  let x = if left.0 < right.0 { left.0 } else { right.0 };
+  let y = if left.1 > right.1 { left.1 } else { right.1 };
+
+  (x, y)
+}
+
+#[derive(Debug, PartialEq)]
+enum Overlap {
+  Left,
+  Right,
+  Contains,
+  Contained,
+}
+
+fn check_overlap(
+  origin: (isize, isize),
+  target: (isize, isize),
+) -> Option<Overlap> {
+  if origin.0 <= target.0 && origin.1 >= target.1 {
+    Some(Overlap::Contains)
+  } else if target.0 <= origin.0 && target.1 >= origin.1 {
+    Some(Overlap::Contained)
+  } else if origin.1 >= target.0 && origin.0 < target.0 {
+    Some(Overlap::Right)
+  } else if origin.0 <= target.1 && origin.1 > target.1 {
+    Some(Overlap::Left)
+  } else {
+    None
+  }
 }
