@@ -24,7 +24,8 @@
     "./day_11/Cargo.toml",
     "./day_12/Cargo.toml",
     "./day_13/Cargo.toml",
-    "./day_14/Cargo.toml"
+    "./day_14/Cargo.toml",
+    "./day_15/Cargo.toml"
   ],
   "rust-analyzer.rustfmt.extraArgs": [
     "--config",
