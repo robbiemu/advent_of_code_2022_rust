@@ -56,4 +56,6 @@ I have to say it was a joy and a pain at the same time. React in rust, in the br
 
 Despite the negatives, and the fact that javascript speed improvements keep pushing the bar, in a way that probably obviates the virtual dom approach of dioxus in the long term, its amazingly javascript-y and delivers in full on its promise of giving you a rusty experience in html composition.
 
+Part 2 was unsolvable in reasonable time without reading at least enough in searches to find that people were talking about lines and intersections.
+
 ![screenshot](assets/day_15.png)
