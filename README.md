@@ -47,3 +47,13 @@ I made a not-terrible visualization in [pancurses](https://github.com/ihalila/pa
 ![screenshot](assets/day_14.png)
 
 Although this task does not really need it, I built it multi-threaded, which turned into a bit of a challenge because of the underlying curses library (which has no public repository).
+
+### Day 15
+
+I used day 15 to try out [dioxus](https://dioxuslabs.com/). 
+
+I have to say it was a joy and a pain at the same time. React in rust, in the browser even, sounds great, but the reality is rsx! macro leaves you with runtime borrow errors and it is a tricky thing to work through while still learning rust. The amazing debugger errors, that sometimes aren't really so amazing in the first place but more often than not are, become far more often opaque in this environment. And I totally gave up on making it a mobile app, as it did not spin up the emulator after starting a mobile project.
+
+Despite the negatives, and the fact that javascript speed improvements keep pushing the bar, in a way that probably obviates the virtual dom approach of dioxus in the long term, its amazingly javascript-y and delivers in full on its promise of giving you a rusty experience in html composition.
+
+![screenshot](assets/day_15.png)

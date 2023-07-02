@@ -100,7 +100,6 @@ pub fn count_row(index: usize, bounds: Bounds, records: &[Record]) -> usize {
     let (sensor, beacon) = record;
     let (bx, by) = get_bounded_coordinate_indices(&bounds, beacon).unwrap();
     if by == index {
-      log::warn!("beacon found on x {bx}");
       beacons.insert(bx);
     }
 

@@ -9,6 +9,8 @@ mod part_select;
 use part_select::part_select;
 mod part1;
 use part1::part_1;
+mod part2;
+use part2::part_2;
 mod beacon;
 mod sensor_and_container;
 
@@ -66,7 +68,7 @@ pub fn app(cx: Scope) -> Element {
         AppMode::Modal => rsx!(input_puzzle {}),
         AppMode::PartSelection => rsx!(part_select {}),
         AppMode::Part1 => rsx!(part_1 {}),
-        AppMode::Part2 => unimplemented!(),
+        AppMode::Part2 => rsx!(part_2 {}),
       }
     }
   ))

@@ -41,10 +41,7 @@ pub mod prelude {
 }
 
 use sscanf::sscanf;
-use std::{
-  cmp::{max, min},
-  collections::HashMap,
-};
+use std::cmp::{max, min};
 
 use prelude::*;
 
@@ -128,45 +125,6 @@ pub fn get_bounded_coordinate_indices(
   None
 }
 
-// not quite right
-pub fn _aco(
-  origin: (usize, usize),
-  path_length: usize,
-  map: &mut Vec<Vec<bool>>,
-) {
-  let mut visited: HashMap<(usize, usize), usize> = HashMap::new();
-  let mut queue: Vec<(usize, usize, usize)> = Vec::new();
-  let directions: [(isize, isize); 4] = [(0, 1), (0, -1), (1, 0), (-1, 0)];
-  queue.push((origin.0, origin.1, 0));
-  while let Some((cur_x, cur_y, cur_dist)) = queue.pop() {
-    if cur_dist > path_length
-      || ((visited.contains_key(&(cur_x, cur_y)))
-        && *visited.get(&(cur_x, cur_y)).unwrap() <= cur_dist)
-    {
-      continue;
-    }
-    //log::info!("{:?}", (cur_x, cur_y));
-    visited.insert((cur_x, cur_y), cur_dist);
-    map[cur_y][cur_x] = true;
-
-    for &(dx, dy) in &directions {
-      let next_x = cur_x as isize + dx;
-      let next_y = cur_y as isize + dy;
-      if next_x >= 0 && next_y >= 0 {
-        let next_y: usize = next_y as usize;
-        let next_x: usize = next_x as usize;
-        if next_x < map[0].len()
-          && next_y < map.len()
-          && ((!visited.contains_key(&(next_x, next_y)))
-            || *visited.get(&(next_x, next_y)).unwrap() <= cur_dist + 1)
-        {
-          queue.push((next_x, next_y, cur_dist + 1));
-        }
-      }
-    }
-  }
-}
-
 pub fn solve_to(
   origin: (usize, usize),
   target_y: usize,
@@ -190,36 +148,21 @@ pub fn extend_coord_ranges(range: Coord, ranges: &mut [Coord]) -> Vec<Coord> {
   let mut exclude: Vec<usize> = Vec::new();
 
   for (i, r) in ranges.iter().enumerate() {
-    log::info!("considering: target {:?} origin {:?}", range, r);
-
     match check_overlap(*r, range) {
       Some(Overlap::Left) => {
-        log::info!("found outer left: target {:?} origin {:?}", range, r);
         left = i;
         current_merge = i;
       }
       Some(Overlap::Right) => {
-        log::info!("found outer right: target {:?} origin {:?}", range, r);
         right = i;
         current_merge = i;
       }
       Some(Overlap::Contains) => {
-        log::info!(
-          "found outer contains range: target {:?} origin {:?}",
-          range,
-          r
-        );
         right = i;
         break;
       }
       Some(Overlap::Contained) => {
-        log::info!(
-          "found outer contained in range: target {:?} origin {:?}",
-          range,
-          r
-        );
         exclude.push(i);
-        break;
       }
       None => (),
     }
@@ -228,21 +171,14 @@ pub fn extend_coord_ranges(range: Coord, ranges: &mut [Coord]) -> Vec<Coord> {
       for (j, r2) in ranges.iter().enumerate().skip(i + 1) {
         match check_overlap(*r2, range) {
           Some(Overlap::Left) => {
-            log::info!("found inner left: target {:?} origin {:?}", range, r2);
             left = j;
             break;
           }
           Some(Overlap::Right) => {
-            log::info!("found inner right: target {:?} origin {:?}", range, r2);
             right = j;
             break;
           }
           Some(Overlap::Contained) => {
-            log::info!(
-              "found inner contained: target {:?} origin {:?}",
-              range,
-              r2
-            );
             exclude.push(j);
           }
           _ => (),
@@ -260,6 +196,7 @@ pub fn extend_coord_ranges(range: Coord, ranges: &mut [Coord]) -> Vec<Coord> {
   if right != usize::MAX {
     working_range = merge_coord_range(ranges[right], working_range);
   }
+
   merged_ranges.push(working_range);
   merged_ranges.extend(
     ranges
