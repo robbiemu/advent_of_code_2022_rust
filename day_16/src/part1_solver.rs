@@ -1,9 +1,11 @@
 use petgraph::{algo::floyd_warshall, prelude::GraphMap, Undirected};
-use std::collections::HashMap;
+use std::collections::HashSet;
 
 use super::problem_solver::ProblemSolver;
 use crate::common::{parse_line, prelude::*};
 
+
+const MAX_STEP: usize = 30;
 
 pub struct PSInput {
   graph: GraphMap<Valve, usize, Undirected>,
@@ -43,56 +45,50 @@ impl ProblemSolver for ProblemSolverPattern {
   }
 
   fn solve(input: Self::Input) -> Self::Solution {
+    let flow_valve_network: HashSet<Valve> = input
+      .graph
+      .nodes()
+      .filter(|valve| valve.coefficient > 0)
+      .collect();
     let fw = floyd_warshall(&input.graph, |_| 1).unwrap();
-    let mut eulerian_network: GraphMap<Valve, usize, Undirected> =
+
+    let start_node_label = "AA".to_owned();
+    let current_node = find_node(start_node_label, &input.graph).unwrap();
+
+    let mut shortest_flow_paths: GraphMap<Valve, usize, Undirected> =
       GraphMap::new();
-    let nodes: Vec<Valve> = input.graph.nodes().collect();
-    nodes.iter().enumerate().for_each(|(i, from)| {
-      nodes.iter().skip(i + 1).for_each(|to| {
-        if from != to && !eulerian_network.contains_edge(*from, *to) {
-          eulerian_network.add_edge(*from, *to, fw[&(*from, *to)]);
+    flow_valve_network.iter().enumerate().for_each(|(i, from)| {
+      if *from != current_node {
+        shortest_flow_paths.add_edge(
+          *from,
+          current_node,
+          fw[&(*from, current_node)],
+        );
+      }
+      flow_valve_network.iter().skip(i + 1).for_each(|to| {
+        if !shortest_flow_paths.contains_edge(*from, *to) {
+          shortest_flow_paths.add_edge(*from, *to, fw[&(*from, *to)]);
         }
       });
     });
 
-    let mut dp_table: HashMap<String, Vec<usize>> = HashMap::new();
-    let max_steps = 30;
-    let start_node_label = "AA".to_owned();
-    for node in nodes {
-      dp_table.insert(node.label.to_owned(), vec![0; max_steps + 1]);
-    }
+    let sfp: String = shortest_flow_paths
+      .nodes()
+      .map(|v| {
+        let edges = shortest_flow_paths
+          .edges(v)
+          .map(|(f, t, c)| format!("{}-{} {c}", f.label, t.label))
+          .collect::<Vec<String>>()
+          .join(",");
+        format!("{} [{edges}]\n", v.label)
+      })
+      .collect();
+    eprintln!("{sfp}");
 
-    for time_step in 1..=max_steps {
-      for current_node in input.graph.nodes() {
-        let base_score: usize =
-          eulerian_network.edges(current_node).fold(0, |acc, cur| {
-            if (time_step as isize - *cur.2 as isize) < 0 {
-              return acc;
-            }
-            let candidate = if cur.0 == current_node { cur.1 } else { cur.0 };
-            let candidate_score = dp_table[candidate.label][time_step - cur.2];
+    let (best_path, score) =
+      find_path(1, 0, vec![current_node], shortest_flow_paths);
 
-            if candidate_score >= acc {
-              candidate_score
-            } else {
-              acc
-            }
-          });
-
-        let score_vector = dp_table.get_mut(current_node.label).unwrap();
-        score_vector[time_step] = base_score.max(score_vector[time_step]);
-        if time_step < max_steps {
-          let addend = current_node.coefficient * (max_steps - (time_step + 1));
-          score_vector[time_step + 1] =
-            score_vector[time_step + 1].max(base_score + addend);
-        }
-      }
-    }
-
-    let score = dp_table
-      .get(&start_node_label)
-      .map(|values| values.iter().cloned().max().unwrap_or(0))
-      .unwrap_or(0);
+    dbg!(best_path.iter().map(|n| n.label).collect::<String>());
 
     Self::Solution { score }
   }
@@ -100,4 +96,45 @@ impl ProblemSolver for ProblemSolverPattern {
   fn output(solution: Self::Solution) {
     println!("score {}", solution.score);
   }
+}
+
+fn find_node(
+  label: String,
+  graph: &GraphMap<Valve, usize, Undirected>,
+) -> Option<Valve> {
+  graph.nodes().find(|valve| valve.label == label)
+}
+
+fn find_path(
+  step: usize,
+  score: usize,
+  path: Vec<Valve>,
+  graph: GraphMap<Valve, usize, Undirected>,
+) -> (Vec<Valve>, usize) {
+  if path.len() == graph.nodes().len() {
+    return (path, score);
+  }
+  let current_node = *path.last().unwrap();
+  graph.edges(current_node).fold(
+    (path.clone(), score),
+    |acc, (from, to, cost)| {
+      let node = if from == current_node { to } else { from };
+
+      if path.contains(&node) || MAX_STEP < (step + cost + 1) {
+        return acc;
+      }
+
+      let (p, sc) = find_path(
+        step + cost + 1,
+        score + node.coefficient * (MAX_STEP - (step + cost)),
+        [path.clone(), vec![node]].concat(),
+        graph.clone(),
+      );
+      if sc > acc.1 {
+        (p, sc)
+      } else {
+        acc
+      }
+    },
+  )
 }
