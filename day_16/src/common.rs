@@ -2,6 +2,8 @@ pub mod prelude {
   use std::hash::{Hash, Hasher};
 
 
+  pub const MAX_STEP: usize = 30;
+
   #[derive(Clone, Copy, Debug, Eq, PartialOrd, Ord)]
   pub struct Valve {
     pub label: &'static str,
@@ -35,6 +37,10 @@ pub mod prelude {
     pub to: Valve,
   }
 }
+
+use std::collections::{HashMap, HashSet};
+
+use petgraph::{prelude::GraphMap, Undirected};
 
 use prelude::*;
 
@@ -73,4 +79,71 @@ pub fn parse_line(line: &str) -> (Valve, Vec<Tunnel>) {
     .collect();
 
   (valve, edges)
+}
+
+pub fn find_node(
+  label: String,
+  graph: &GraphMap<Valve, usize, Undirected>,
+) -> Option<Valve> {
+  graph.nodes().find(|valve| valve.label == label)
+}
+
+pub fn get_shortest_flow_paths(
+  current_node: Valve,
+  nodes: HashSet<Valve>,
+  fw: HashMap<(Valve, Valve), usize>,
+) -> GraphMap<Valve, usize, Undirected> {
+  let mut shortest_flow_paths: GraphMap<Valve, usize, Undirected> =
+    GraphMap::new();
+  nodes.iter().enumerate().for_each(|(i, from)| {
+    if *from != current_node {
+      shortest_flow_paths.add_edge(
+        *from,
+        current_node,
+        fw[&(*from, current_node)],
+      );
+    }
+    nodes.iter().skip(i + 1).for_each(|to| {
+      if !shortest_flow_paths.contains_edge(*from, *to) {
+        shortest_flow_paths.add_edge(*from, *to, fw[&(*from, *to)]);
+      }
+    });
+  });
+
+  shortest_flow_paths
+}
+
+#[allow(dead_code)]
+pub fn find_path(
+  step: usize,
+  score: usize,
+  path: Vec<Valve>,
+  graph: &GraphMap<Valve, usize, Undirected>,
+) -> (Vec<Valve>, usize) {
+  if path.len() == graph.nodes().len() {
+    return (path, score);
+  }
+  let current_node = *path.last().unwrap();
+  graph.edges(current_node).fold(
+    (path.clone(), score),
+    |acc, (from, to, cost)| {
+      let node = if from == current_node { to } else { from };
+
+      if path.contains(&node) || MAX_STEP < (step + cost + 1) {
+        return acc;
+      }
+
+      let (p, sc) = find_path(
+        step + cost + 1,
+        score + node.coefficient * (MAX_STEP - (step + cost)),
+        [path.clone(), vec![node]].concat(),
+        graph,
+      );
+      if sc > acc.1 {
+        (p, sc)
+      } else {
+        acc
+      }
+    },
+  )
 }
