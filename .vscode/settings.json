@@ -11,21 +11,7 @@
   "rust-analyzer.checkOnSave": true,
   "rust-analyzer.cargo.buildScripts.overrideCommand": null,
   "rust-analyzer.linkedProjects": [
-    "./day_1/Cargo.toml",
-    "./day_2/Cargo.toml",
-    "./day_3/Cargo.toml",
-    "./day_4/Cargo.toml",
-    "./day_5/Cargo.toml",
-    "./day_6/Cargo.toml",
-    "./day_7/Cargo.toml",
-    "./day_8/Cargo.toml",
-    "./day_9/Cargo.toml",
-    "./day_10/Cargo.toml",
-    "./day_11/Cargo.toml",
-    "./day_12/Cargo.toml",
-    "./day_13/Cargo.toml",
-    "./day_14/Cargo.toml",
-    "./day_15/Cargo.toml"
+    "./day_16/Cargo.toml"
   ],
   "rust-analyzer.rustfmt.extraArgs": [
     "--config",
