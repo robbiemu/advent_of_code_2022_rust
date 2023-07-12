@@ -1,12 +1,11 @@
-use std::collections::{HashMap, HashSet};
-
 use ndarray::{Array, ArrayBase, Dim, OwnedRepr};
+use std::collections::{HashMap, HashSet};
 
 use super::problem_solver::ProblemSolver;
 use crate::common::{get_neighbors, prelude::*};
 
 
-const MAX_COORDS: (usize, usize, usize) = (22, 22, 22);
+const MAX_COORDS: (usize, usize, usize) = (24, 24, 24);
 
 pub type ReachableMap = HashMap<Position, HashSet<Position>>;
 
@@ -31,9 +30,9 @@ impl ProblemSolver for ProblemSolverPattern {
       let coords: Vec<usize> =
         l.split(',').map(|w| w.parse::<usize>().unwrap()).collect();
 
-      let x = coords[0];
-      let z = coords[1];
-      let y = coords[2];
+      let x = coords[0] + 1;
+      let z = coords[1] + 1;
+      let y = coords[2] + 1;
 
       three_d[[x, y, z]] = true;
     });
@@ -51,7 +50,9 @@ impl ProblemSolver for ProblemSolverPattern {
     solution
       .externalized_points
       .iter()
-      .for_each(|(k, v)| println!("{:?}:{}", k, v.len()));
+      .for_each(|((x, y, z), v)| {
+        println!("{:?}:{}", (x - 1, y - 1, z - 1), v.len())
+      });
 
     println!(
       "total {}",
@@ -80,8 +81,8 @@ pub fn dfs(
     if x >= x_len || y >= y_len || z >= z_len || visited[position] {
       continue;
     }
-
     visited[position] = true;
+
     let neighbors = get_neighbors(position, space);
     for neighbor in neighbors {
       if space[neighbor] {

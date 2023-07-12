@@ -1,6 +1,5 @@
-use std::collections::HashMap;
-
 use ndarray::{Array, ArrayBase, Dim, OwnedRepr};
+use std::collections::HashMap;
 
 use super::problem_solver::ProblemSolver;
 use crate::common::{get_neighbors, prelude::*};
