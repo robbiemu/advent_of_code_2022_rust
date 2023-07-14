@@ -118,39 +118,48 @@ fn model_system(system: &System) -> usize {
       continue;
     }
     model.add_constraint(constraint!(
-      ore_sum[i - 2]
-        >= system.ore_robot.requirements.ore.unwrap_or(0) as f64 * (ore[i] - 1)
-          + system.clay_robot.requirements.ore.unwrap_or(0) as f64 * clay[i]
+      ore_sum[i - 2] // -- earlier I needed enough ore to...
+        >= system.ore_robot.requirements.ore.unwrap_or(0) as f64
+          * (ore[i] - ore[0]) // build my ore robots...
+          + system.clay_robot.requirements.ore.unwrap_or(0) as f64
+            * (clay[i] - clay[0]) // and my clay robots, etc
           + system.obsidian_robot.requirements.ore.unwrap_or(0) as f64
-            * obsidian[i]
-          + system.geode_robot.requirements.ore.unwrap_or(0) as f64 * geode[i]
+            * (obsidian[i] - obsidian[0])
+          + system.geode_robot.requirements.ore.unwrap_or(0) as f64
+            * (geode[i] - geode[0])
     ));
     model.add_constraint(constraint!(
       clay_sum[i - 2]
-        >= system.ore_robot.requirements.clay.unwrap_or(0) as f64 * ore[i]
-          + system.clay_robot.requirements.clay.unwrap_or(0) as f64 * clay[i]
+        >= system.ore_robot.requirements.clay.unwrap_or(0) as f64
+          * (ore[i] - ore[0])
+          + system.clay_robot.requirements.clay.unwrap_or(0) as f64
+            * (clay[i] - clay[0])
           + system.obsidian_robot.requirements.clay.unwrap_or(0) as f64
-            * obsidian[i]
-          + system.geode_robot.requirements.clay.unwrap_or(0) as f64 * geode[i]
+            * (obsidian[i] - obsidian[0])
+          + system.geode_robot.requirements.clay.unwrap_or(0) as f64
+            * (geode[i] - geode[0])
     ));
     model.add_constraint(constraint!(
       obsidian_sum[i - 2]
-        >= system.ore_robot.requirements.obsidian.unwrap_or(0) as f64 * ore[i]
+        >= system.ore_robot.requirements.obsidian.unwrap_or(0) as f64
+          * (ore[i] - ore[0])
           + system.clay_robot.requirements.obsidian.unwrap_or(0) as f64
-            * clay[i]
+            * (clay[i] - clay[0])
           + system.obsidian_robot.requirements.obsidian.unwrap_or(0) as f64
-            * obsidian[i]
+            * (obsidian[i] - obsidian[0])
           + system.geode_robot.requirements.obsidian.unwrap_or(0) as f64
-            * geode[i]
+            * (geode[i] - geode[0])
     ));
     model.add_constraint(constraint!(
       geode_sum[i - 2]
-        >= system.ore_robot.requirements.geode.unwrap_or(0) as f64 * ore[i]
-          + system.clay_robot.requirements.geode.unwrap_or(0) as f64 * clay[i]
+        >= system.ore_robot.requirements.geode.unwrap_or(0) as f64
+          * (ore[i] - ore[0])
+          + system.clay_robot.requirements.geode.unwrap_or(0) as f64
+            * (clay[i] - clay[0])
           + system.obsidian_robot.requirements.geode.unwrap_or(0) as f64
-            * obsidian[i]
+            * (obsidian[i] - obsidian[0])
           + system.geode_robot.requirements.geode.unwrap_or(0) as f64
-            * geode[i]
+            * (geode[i] - geode[0])
     ));
   }
 
@@ -161,47 +170,47 @@ fn model_system(system: &System) -> usize {
       system.id,
       i + 1,
       (solution.value(ore_sum[i])
-        - system.ore_robot.requirements.ore.unwrap_or(0) as f64
-          * (solution.value(ore[i]) - 1.0)
-        + system.clay_robot.requirements.ore.unwrap_or(0) as f64
-          * solution.value(clay[i])
-        + system.obsidian_robot.requirements.ore.unwrap_or(0) as f64
-          * solution.value(obsidian[i])
-        + system.geode_robot.requirements.ore.unwrap_or(0) as f64
-          * solution.value(geode[i]))
+        - (system.ore_robot.requirements.ore.unwrap_or(0) as f64
+          * (solution.value(ore[i]) - system.ore.get() as f64)
+          + system.clay_robot.requirements.ore.unwrap_or(0) as f64
+            * solution.value(clay[i])
+          + system.obsidian_robot.requirements.ore.unwrap_or(0) as f64
+            * solution.value(obsidian[i])
+          + system.geode_robot.requirements.ore.unwrap_or(0) as f64
+            * solution.value(geode[i])))
       .round() as usize,
       (solution.value(ore[i])).round() as usize,
       (solution.value(clay_sum[i])
-        - system.ore_robot.requirements.clay.unwrap_or(0) as f64
+        - (system.ore_robot.requirements.clay.unwrap_or(0) as f64
           * solution.value(ore[i])
-        + system.clay_robot.requirements.clay.unwrap_or(0) as f64
-          * solution.value(clay[i])
-        + system.obsidian_robot.requirements.clay.unwrap_or(0) as f64
-          * solution.value(obsidian[i])
-        + system.geode_robot.requirements.clay.unwrap_or(0) as f64
-          * solution.value(geode[i]))
+          + system.clay_robot.requirements.clay.unwrap_or(0) as f64
+            * solution.value(clay[i])
+          + system.obsidian_robot.requirements.clay.unwrap_or(0) as f64
+            * solution.value(obsidian[i])
+          + system.geode_robot.requirements.clay.unwrap_or(0) as f64
+            * solution.value(geode[i])))
       .round() as usize,
       (solution.value(clay[i])).round() as usize,
       (solution.value(obsidian_sum[i])
-        - system.ore_robot.requirements.obsidian.unwrap_or(0) as f64
+        - (system.ore_robot.requirements.obsidian.unwrap_or(0) as f64
           * solution.value(ore[i])
-        + system.clay_robot.requirements.obsidian.unwrap_or(0) as f64
-          * solution.value(clay[i])
-        + system.obsidian_robot.requirements.obsidian.unwrap_or(0) as f64
-          * solution.value(obsidian[i])
-        + system.geode_robot.requirements.obsidian.unwrap_or(0) as f64
-          * solution.value(geode[i]))
+          + system.clay_robot.requirements.obsidian.unwrap_or(0) as f64
+            * solution.value(clay[i])
+          + system.obsidian_robot.requirements.obsidian.unwrap_or(0) as f64
+            * solution.value(obsidian[i])
+          + system.geode_robot.requirements.obsidian.unwrap_or(0) as f64
+            * solution.value(geode[i])))
       .round() as usize,
       (solution.value(obsidian[i])).round() as usize,
       (solution.value(geode_sum[i])
-        - system.ore_robot.requirements.geode.unwrap_or(0) as f64
+        - (system.ore_robot.requirements.geode.unwrap_or(0) as f64
           * solution.value(ore[i])
-        + system.clay_robot.requirements.geode.unwrap_or(0) as f64
-          * solution.value(clay[i])
-        + system.obsidian_robot.requirements.geode.unwrap_or(0) as f64
-          * solution.value(obsidian[i])
-        + system.geode_robot.requirements.geode.unwrap_or(0) as f64
-          * solution.value(geode[i]))
+          + system.clay_robot.requirements.geode.unwrap_or(0) as f64
+            * solution.value(clay[i])
+          + system.obsidian_robot.requirements.geode.unwrap_or(0) as f64
+            * solution.value(obsidian[i])
+          + system.geode_robot.requirements.geode.unwrap_or(0) as f64
+            * solution.value(geode[i])))
       .round() as usize,
       (solution.value(geode[i])).round() as usize
     );
