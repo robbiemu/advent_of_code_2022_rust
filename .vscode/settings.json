@@ -13,7 +13,8 @@
   "rust-analyzer.linkedProjects": [
     "./day_16/Cargo.toml",
     "./day_17/Cargo.toml",
-    "./day_18/Cargo.toml"
+    "./day_18/Cargo.toml",
+    "./day_19/Cargo.toml"
   ],
   "rust-analyzer.rustfmt.extraArgs": [
     "--config",

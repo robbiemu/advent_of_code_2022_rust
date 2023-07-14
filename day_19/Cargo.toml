@@ -1,0 +1,18 @@
+[package]
+name = "day_19"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+good_lp = { version = "*", features = ["scip"], default-features = false }
+sscanf = "0.4.1"
+
+[[bin]]
+name="part1"
+path="src/part1.rs"
+
+[[bin]]
+name="part2"
+path="src/part2.rs"
