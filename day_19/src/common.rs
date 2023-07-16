@@ -256,7 +256,8 @@ fn model_system(system: &System) -> usize {
     model.add_constraint(constraint!(expr.clone() <= 1));
     model.add_constraint(constraint!(expr >= 0));
 
-    /* The amount of robots of each type on each minute is limited by the materials available to build them until that minute. */
+    /* The amount of robots of each type on each minute is limited by the
+    materials available to build them until that minute. */
     if i == 1 {
       continue;
     }
@@ -344,12 +345,14 @@ fn log_solution(
 ) {
   let minutes = system.time_steps + 1;
 
-  for i in 0..minutes {
+  /* change to 0..minutes and change i to i + 1 below to report _during_ values.
+  these are _after_ values */
+  for i in 1..minutes {
     let sci = if i == minutes - 1 { i } else { i + 1 };
     println!(
       "[blueprint {} @{}] ore:{}({}) clay:{}({}) obsidian:{}({}) geode:{}({})",
       system.id,
-      i + 1,
+      i,
       (solution.value(minute_record.ore_sum[i])
         - (system.ore_robot.requirements.ore.unwrap_or(0) as f64
           * (solution.value(minute_record.ore[sci]) - system.ore as f64)
