@@ -16,3 +16,7 @@ path="src/part1.rs"
 [[bin]]
 name="part2"
 path="src/part2.rs"
+
+[[bin]]
+name="rusty-aoc"
+path="src/rusty_aoc.rs"
