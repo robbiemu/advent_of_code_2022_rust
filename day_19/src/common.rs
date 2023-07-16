@@ -130,6 +130,10 @@ impl Default for System {
   }
 }
 
+use good_lp::{
+  constraint, default_solver, solvers::scip::SCIPSolved, variable, variables,
+  Solution, SolverModel, Variable,
+};
 use sscanf::sscanf;
 use std::collections::{HashMap, VecDeque};
 
@@ -201,4 +205,204 @@ fn factory_robot(spec: String) -> Robot {
   robot.requirements = requirements;
 
   robot
+}
+
+pub fn score_system(system: &System) -> (usize, usize) {
+  let score = model_system(system);
+
+  (system.id, score)
+}
+
+fn model_system(system: &System) -> usize {
+  let minutes = system.time_steps + 1;
+  let mut problem = variables!();
+  // 4 robots to harvest materials
+  let ore = problem.add_vector(variable().integer().min(0), minutes);
+  let clay = problem.add_vector(variable().integer().min(0), minutes);
+  let obsidian = problem.add_vector(variable().integer().min(0), minutes);
+  let geode = problem.add_vector(variable().integer().min(0), minutes);
+  // and a cumulative total of materials
+  let ore_sum = problem.add_vector(variable().integer().min(0), minutes);
+  let clay_sum = problem.add_vector(variable().integer().min(0), minutes);
+  let obsidian_sum = problem.add_vector(variable().integer().min(0), minutes);
+  let geode_sum = problem.add_vector(variable().integer().min(0), minutes);
+
+  let mut model = problem
+    // the cumulative pile is correct at the time step, but we want _after_
+    .maximise(*geode_sum.last().unwrap())
+    .using(default_solver)
+    .with(constraint!(ore[0] == system.ore.get() as f64)) // robots
+    .with(constraint!(clay[0] == system.clay.get() as f64))
+    .with(constraint!(obsidian[0] == system.obsidian.get() as f64))
+    .with(constraint!(geode[0] == system.geode.get() as f64))
+    .with(constraint!(ore_sum[0] == 0)) // cumulative totals
+    .with(constraint!(clay_sum[0] == 0))
+    .with(constraint!(obsidian_sum[0] == 0))
+    .with(constraint!(geode_sum[0] == 0));
+
+  for i in 1..minutes {
+    // cumulative totals
+    model.add_constraint(constraint!(ore_sum[i] == ore_sum[i - 1] + ore[i]));
+    model.add_constraint(constraint!(clay_sum[i] == clay_sum[i - 1] + clay[i]));
+    model.add_constraint(constraint!(
+      obsidian_sum[i] == obsidian_sum[i - 1] + obsidian[i]
+    ));
+    model
+      .add_constraint(constraint!(geode_sum[i] == geode_sum[i - 1] + geode[i]));
+
+    // the constraints ensure that the values do no decline from step to step
+    model.add_constraint(constraint!(ore[i] >= ore[i - 1]));
+    model.add_constraint(constraint!(clay[i] >= clay[i - 1]));
+    model.add_constraint(constraint!(obsidian[i] >= obsidian[i - 1]));
+    model.add_constraint(constraint!(geode[i] >= geode[i - 1]));
+
+    // only one robot can be built each turn.
+    let expr = ore[i] + clay[i] + obsidian[i] + geode[i]
+      - ore[i - 1]
+      - clay[i - 1]
+      - obsidian[i - 1]
+      - geode[i - 1];
+    model.add_constraint(constraint!(expr.clone() <= 1));
+    model.add_constraint(constraint!(expr >= 0));
+
+    /* The amount of robots of each type on each minute is limited by the materials available to build them until that minute. */
+    if i == 1 {
+      continue;
+    }
+    model.add_constraint(constraint!(
+      ore_sum[i - 2] // -- earlier I needed enough ore to...
+        >= system.ore_robot.requirements.ore.unwrap_or(0) as f64
+          * (ore[i] - ore[0]) // build my ore robots...
+          + system.clay_robot.requirements.ore.unwrap_or(0) as f64
+            * (clay[i] - clay[0]) // and my clay robots, etc
+          + system.obsidian_robot.requirements.ore.unwrap_or(0) as f64
+            * (obsidian[i] - obsidian[0])
+          + system.geode_robot.requirements.ore.unwrap_or(0) as f64
+            * (geode[i] - geode[0])
+    ));
+    model.add_constraint(constraint!(
+      clay_sum[i - 2]
+        >= system.ore_robot.requirements.clay.unwrap_or(0) as f64
+          * (ore[i] - ore[0])
+          + system.clay_robot.requirements.clay.unwrap_or(0) as f64
+            * (clay[i] - clay[0])
+          + system.obsidian_robot.requirements.clay.unwrap_or(0) as f64
+            * (obsidian[i] - obsidian[0])
+          + system.geode_robot.requirements.clay.unwrap_or(0) as f64
+            * (geode[i] - geode[0])
+    ));
+    model.add_constraint(constraint!(
+      obsidian_sum[i - 2]
+        >= system.ore_robot.requirements.obsidian.unwrap_or(0) as f64
+          * (ore[i] - ore[0])
+          + system.clay_robot.requirements.obsidian.unwrap_or(0) as f64
+            * (clay[i] - clay[0])
+          + system.obsidian_robot.requirements.obsidian.unwrap_or(0) as f64
+            * (obsidian[i] - obsidian[0])
+          + system.geode_robot.requirements.obsidian.unwrap_or(0) as f64
+            * (geode[i] - geode[0])
+    ));
+    model.add_constraint(constraint!(
+      geode_sum[i - 2]
+        >= system.ore_robot.requirements.geode.unwrap_or(0) as f64
+          * (ore[i] - ore[0])
+          + system.clay_robot.requirements.geode.unwrap_or(0) as f64
+            * (clay[i] - clay[0])
+          + system.obsidian_robot.requirements.geode.unwrap_or(0) as f64
+            * (obsidian[i] - obsidian[0])
+          + system.geode_robot.requirements.geode.unwrap_or(0) as f64
+            * (geode[i] - geode[0])
+    ));
+  }
+
+  let solution = model.solve().unwrap();
+  log_solution(
+    &solution,
+    system,
+    MinuteRecord {
+      ore,
+      clay,
+      obsidian,
+      geode,
+      ore_sum,
+      clay_sum,
+      obsidian_sum,
+      geode_sum: geode_sum.clone(),
+    },
+  );
+  let geode_solution = solution.value(*geode_sum.last().unwrap()).round();
+
+  geode_solution as usize
+}
+
+struct MinuteRecord {
+  ore: Vec<Variable>,
+  clay: Vec<Variable>,
+  obsidian: Vec<Variable>,
+  geode: Vec<Variable>,
+  ore_sum: Vec<Variable>,
+  clay_sum: Vec<Variable>,
+  obsidian_sum: Vec<Variable>,
+  geode_sum: Vec<Variable>,
+}
+
+fn log_solution(
+  solution: &SCIPSolved,
+  system: &System,
+  minute_record: MinuteRecord,
+) {
+  let minutes = system.time_steps + 1;
+
+  for i in 0..minutes {
+    let sci = if i == minutes - 1 { i } else { i + 1 };
+    println!(
+      "[blueprint {} @{}] ore:{}({}) clay:{}({}) obsidian:{}({}) geode:{}({})",
+      system.id,
+      i + 1,
+      (solution.value(minute_record.ore_sum[i])
+        - (system.ore_robot.requirements.ore.unwrap_or(0) as f64
+          * (solution.value(minute_record.ore[sci]) - system.ore.get() as f64)
+          + system.clay_robot.requirements.ore.unwrap_or(0) as f64
+            * solution.value(minute_record.clay[sci])
+          + system.obsidian_robot.requirements.ore.unwrap_or(0) as f64
+            * solution.value(minute_record.obsidian[sci])
+          + system.geode_robot.requirements.ore.unwrap_or(0) as f64
+            * solution.value(minute_record.geode[sci])))
+      .round() as usize,
+      (solution.value(minute_record.ore[i])).round() as usize,
+      (solution.value(minute_record.clay_sum[i])
+        - (system.ore_robot.requirements.clay.unwrap_or(0) as f64
+          * solution.value(minute_record.ore[sci])
+          + system.clay_robot.requirements.clay.unwrap_or(0) as f64
+            * solution.value(minute_record.clay[sci])
+          + system.obsidian_robot.requirements.clay.unwrap_or(0) as f64
+            * solution.value(minute_record.obsidian[sci])
+          + system.geode_robot.requirements.clay.unwrap_or(0) as f64
+            * solution.value(minute_record.geode[sci])))
+      .round() as usize,
+      (solution.value(minute_record.clay[i])).round() as usize,
+      (solution.value(minute_record.obsidian_sum[i])
+        - (system.ore_robot.requirements.obsidian.unwrap_or(0) as f64
+          * solution.value(minute_record.ore[sci])
+          + system.clay_robot.requirements.obsidian.unwrap_or(0) as f64
+            * solution.value(minute_record.clay[sci])
+          + system.obsidian_robot.requirements.obsidian.unwrap_or(0) as f64
+            * solution.value(minute_record.obsidian[sci])
+          + system.geode_robot.requirements.obsidian.unwrap_or(0) as f64
+            * solution.value(minute_record.geode[sci])))
+      .round() as usize,
+      (solution.value(minute_record.obsidian[i])).round() as usize,
+      (solution.value(minute_record.geode_sum[i])
+        - (system.ore_robot.requirements.geode.unwrap_or(0) as f64
+          * solution.value(minute_record.ore[sci])
+          + system.clay_robot.requirements.geode.unwrap_or(0) as f64
+            * solution.value(minute_record.clay[sci])
+          + system.obsidian_robot.requirements.geode.unwrap_or(0) as f64
+            * solution.value(minute_record.obsidian[sci])
+          + system.geode_robot.requirements.geode.unwrap_or(0) as f64
+            * solution.value(minute_record.geode[sci])))
+      .round() as usize,
+      (solution.value(minute_record.geode[i])).round() as usize
+    );
+  }
 }

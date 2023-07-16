@@ -4,7 +4,7 @@ use super::problem_solver::ProblemSolver;
 use crate::common::{factory_system, prelude::*, score_system};
 
 
-const TIME_STEPS: usize = 24;
+const TIME_STEPS: usize = 32;
 
 pub struct PSInput {
   systems: Vec<System>,
@@ -21,7 +21,9 @@ impl ProblemSolver for ProblemSolverPattern {
   type Solution = PSSolution;
 
   fn initialize(lines: impl Iterator<Item = String>) -> Self::Input {
-    let systems = lines.map(|l| factory_system(l, TIME_STEPS)).collect();
+    let mut systems: Vec<System> =
+      lines.map(|l| factory_system(l, TIME_STEPS)).collect();
+    systems.truncate(3);
 
     Self::Input { systems }
   }
@@ -45,8 +47,8 @@ impl ProblemSolver for ProblemSolverPattern {
       .join("\n");
 
     println!(
-      "quality sum: {}",
-      solution.scores.iter().map(|(k, v)| k * v).sum::<usize>(),
+      "geodes product: {}",
+      solution.scores.values().product::<usize>(),
     );
     println!("{res}");
   }
