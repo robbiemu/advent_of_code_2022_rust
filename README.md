@@ -59,3 +59,7 @@ Despite the negatives, and the fact that javascript speed improvements keep push
 Part 2 was unsolvable in reasonable time without reading at least enough in searches to find that people were talking about lines and intersections.
 
 ![screenshot](assets/day_15.png)
+
+### Day 18
+
+tiny celebration here: got to check out [ndarray](https://github.com/ndarray/ndarray)
