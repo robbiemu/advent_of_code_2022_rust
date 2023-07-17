@@ -63,3 +63,7 @@ Part 2 was unsolvable in reasonable time without reading at least enough in sear
 ### Day 18
 
 tiny celebration here: got to check out [ndarray](https://github.com/ndarray/ndarray)
+
+### Day 19
+
+tiny celebration here: got to check out [good_lp](https://github.com/rust-or/good_lp)
