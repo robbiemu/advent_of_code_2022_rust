@@ -1,0 +1,22 @@
+[package]
+name = "day_21"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+chumsky = "1.0.0-alpha.4"
+petgraph = "0.6.3"
+rusymbols = "0.1.2"
+#num = "0.4.1"
+# rug ="1.19.2"
+# exmex = { git = "https://github.com/bertiqwerty/exmex.git", branch = "main" }
+
+[[bin]]
+name = "part1"
+path = "src/part1.rs"
+
+[[bin]]
+name = "part2"
+path = "src/part2.rs"
