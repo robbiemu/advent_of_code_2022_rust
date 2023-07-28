@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 use super::problem_solver::ProblemSolver;
 use crate::common::{apply_edges, parse_nodes, prelude::*};
-use crate::ru_symbols_simple_parser::convert_equation_to_expression;
+use crate::simple_parser::resolve_equation;
 
 const HUMAN_NAME: &str = "humn";
 const HUMAN_VARIABLE: &str = "a";
@@ -49,12 +49,7 @@ impl ProblemSolver for ProblemSolverPattern {
       convert_graph_to_equation(&root, &input.graph, &mut HashMap::new());
     dbg!(&equation);
 
-    let expression = convert_equation_to_expression(equation.as_str()).unwrap();
-    dbg!(&expression.to_string());
-
-    let mut context = HashMap::new();
-    context.insert(HUMAN_VARIABLE, 1.0);
-    let value = expression.eval_args(&context).map(|n| n as i64);
+    let value = resolve_equation(equation.as_str());
 
     Self::Solution { value }
   }

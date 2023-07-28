@@ -6,12 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-chumsky = "1.0.0-alpha.4"
 petgraph = "0.6.3"
-rusymbols = "0.1.2"
-#num = "0.4.1"
-# rug ="1.19.2"
-# exmex = { git = "https://github.com/bertiqwerty/exmex.git", branch = "main" }
+regex = "1.9.1"
+evalexpr = "11.0.1"
 
 [[bin]]
 name = "part1"
