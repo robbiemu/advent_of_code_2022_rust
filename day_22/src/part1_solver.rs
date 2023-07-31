@@ -94,8 +94,6 @@ impl Apply for Turtle {
     let offsets = self.get_offsets(board);
     let view = module.view_range(offsets.clone(), 0..=0);
 
-    let pos = self.location.clone();
-
     let (bearing, dim): (isize, &mut usize) = match self.heading {
       Heading::Left => (-1, &mut self.location.x),
       Heading::Right => (1, &mut self.location.x),
@@ -103,15 +101,11 @@ impl Apply for Turtle {
       Heading::Down => (1, &mut self.location.y),
     };
 
-    eprintln!("{pos} {n}{}", self.heading);
-
     let initial = *dim - offsets.start;
     if view.iter().all(|l| !matches!(l, Legend::Wall)) {
       *dim = offsets.start
         + (initial as isize + n as isize * bearing)
           .rem_euclid(view.len() as isize) as usize;
-
-      eprintln!("dim {dim}");
     } else {
       let target_index = offsets.start
         + (initial as isize + n as isize * bearing)
@@ -142,7 +136,6 @@ impl Apply for Turtle {
 
       *dim = if is_target { target_index } else { wall_index };
     }
-    dbg!(dim);
   }
 }
 
