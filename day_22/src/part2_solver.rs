@@ -2,10 +2,11 @@ use super::problem_solver::ProblemSolver;
 use crate::common::{
   extract_board_and_turns_from_stream, get_password, prelude::*,
 };
+use crate::cube::*;
 
 
 pub struct PSInput {
-  board: Board,
+  cube: Cube,
   tape: Tape,
 }
 
@@ -25,36 +26,46 @@ impl ProblemSolver for ProblemSolverPattern {
     lines: impl Iterator<Item = String>,
   ) -> Result<Self::Input, Self::Err> {
     let (board, tape) = extract_board_and_turns_from_stream(lines)?;
+    let board_clone = board.clone();
+    let br = board_clone.get_ref();
+    let mapping = Mapping::from(br.as_slice());
 
-    Ok(Self::Input { board, tape })
+    let mut cube = Cube::from(mapping);
+    cube.board = Some(board);
+    cube.dim = Some(Mapping::get_board_dimension(br));
+
+    Ok(Self::Input { cube, tape })
   }
 
-  fn solve(input: Self::Input) -> Self::Solution {
+  fn solve(_input: Self::Input) -> Self::Solution {
     let mut read_head = Turtle::new();
-    let Some(location) = input.board.get_first_open_position() else {
-      return Self::Solution { read_head: None }
-    };
-    read_head.location = location;
+    // let Some(location) = input.cube.get_first_open_position() else {
+    //   return Self::Solution { read_head: None }
+    // };
+    // read_head.location = location;
 
-    input.tape.iter().for_each(|instruction| {
-      read_head.apply(instruction.to_owned(), &input.board)
-    });
-    represent_solution(&mut input.board.clone(), &read_head);
+    // input.tape.iter().for_each(|instruction| {
+    //   read_head.apply(instruction.to_owned(), &input.cube)
+    // });
+    // represent_solution(&mut input.cube.clone(), &read_head);
 
-    Self::Solution { read_head: Some(read_head) }
+    // Self::Solution { read_head: Some(read_head) }
+    todo!()
   }
 
-  fn output(solution: Self::Solution) {
-    let Some(read_head) = solution.read_head else {
-      println!("no solution found!");
-      return;
-    };
-    let password = get_password(&read_head.location, &read_head.heading);
+  fn output(_solution: Self::Solution) {
+    // let Some(read_head) = solution.read_head else {
+    //   println!("no solution found!");
+    //   return;
+    // };
+    // let password = get_password(&read_head.location, &read_head.heading);
 
-    println!(
-      "final coord {} heading {} : password {}",
-      read_head.location, read_head.heading, password
-    )
+    // println!(
+    //   "final coord {} heading {} : password {}",
+    //   read_head.location, read_head.heading, password
+    // )
+
+    todo!()
   }
 }
 
@@ -139,5 +150,5 @@ impl Apply for Turtle {
 
 
 #[cfg(test)]
-#[path = "./tests/part1_tests.rs"]
-mod part1_tests;
+#[path = "./tests/part2_tests.rs"]
+mod part2_tests;

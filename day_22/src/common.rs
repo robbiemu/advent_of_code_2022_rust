@@ -99,7 +99,7 @@ pub mod prelude {
     }
   }
 
-  #[derive(Clone, Debug, PartialEq)]
+  #[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
   pub struct Coord {
     pub x: usize,
     pub y: usize,
@@ -212,6 +212,14 @@ pub mod prelude {
     pub fn get_mut_ref(&mut self) -> &mut Vec<Vec<Legend>> {
       &mut self.0
     }
+
+    pub fn get_ref(&self) -> &Vec<Vec<Legend>> {
+      &self.0
+    }
+
+    pub(crate) fn get_element(&self, x: usize, y: usize) -> &Legend {
+      &self.0[y][x]
+    }
   }
 
   impl Display for Board {
@@ -300,4 +308,8 @@ pub fn extract_board_and_turns_from_stream(
   };
 
   Ok((board, instructions))
+}
+
+pub fn get_password(location: &Coord, heading: &Heading) -> usize {
+  (location.x + 1) * 4 + (location.y + 1) * 1000 + heading.get_score() as usize
 }
