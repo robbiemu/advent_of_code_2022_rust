@@ -43,25 +43,19 @@ fn get_ring_values<'a>(
   match heading {
     Heading::Right => {
       let y = location.y;
-      Box::new(face_values[y as usize].iter().cloned())
+      Box::new(face_values[y].iter().cloned())
     }
     Heading::Left => {
       let y = location.y;
-      Box::new(face_values[y as usize].iter().rev().cloned())
+      Box::new(face_values[y].iter().rev().cloned())
     }
     Heading::Down => {
       let x = location.x;
-      Box::new(face_values.iter().map(move |row| &row[x as usize]).cloned())
+      Box::new(face_values.iter().map(move |row| &row[x]).cloned())
     }
     Heading::Up => {
       let x = location.x;
-      Box::new(
-        face_values
-          .iter()
-          .map(move |row| &row[x as usize])
-          .rev()
-          .cloned(),
-      )
+      Box::new(face_values.iter().map(move |row| &row[x]).rev().cloned())
     }
   }
 }
@@ -182,68 +176,6 @@ pub enum CubeFace {
 }
 
 impl CubeFace {
-  fn opposite(self) -> CubeFace {
-    match self {
-      CubeFace::Front => CubeFace::Back,
-      CubeFace::Back => CubeFace::Front,
-      CubeFace::Left => CubeFace::Right,
-      CubeFace::Right => CubeFace::Left,
-      CubeFace::Up => CubeFace::Down,
-      CubeFace::Down => CubeFace::Up,
-    }
-  }
-
-  fn comparator(
-    &self,
-    heading: Heading,
-  ) -> impl Fn(&CubeFace, &CubeFace) -> Ordering {
-    let left_right_order = match heading {
-      Heading::Left => [
-        CubeFace::Front,
-        CubeFace::Left,
-        CubeFace::Back,
-        CubeFace::Right,
-      ],
-      Heading::Right => [
-        CubeFace::Front,
-        CubeFace::Right,
-        CubeFace::Back,
-        CubeFace::Left,
-      ],
-      Heading::Up => [
-        CubeFace::Front,
-        CubeFace::Up,
-        CubeFace::Back,
-        CubeFace::Down,
-      ],
-      Heading::Down => [
-        CubeFace::Front,
-        CubeFace::Down,
-        CubeFace::Back,
-        CubeFace::Up,
-      ],
-    };
-
-
-    move |a, b| {
-      let a_index = left_right_order
-        .iter()
-        .enumerate()
-        .find(|(_, &face)| face == *a)
-        .map(|(index, _)| index)
-        .unwrap_or(std::usize::MAX);
-
-      let b_index = left_right_order
-        .iter()
-        .enumerate()
-        .find(|(_, &face)| face == *b)
-        .map(|(index, _)| index)
-        .unwrap_or(std::usize::MAX);
-
-      a_index.cmp(&b_index)
-    }
-  }
-
   fn from_cardinal_index(index: usize) -> CubeFace {
     match index {
       0 => CubeFace::Right,
