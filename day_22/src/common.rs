@@ -67,9 +67,10 @@ pub mod prelude {
     }
   }
 
-  #[derive(Clone, Debug, PartialEq)]
+  #[derive(Clone, Debug, Default, PartialEq)]
   pub enum Legend {
     RepresentationOnlyTurtle(Heading),
+    #[default]
     Space,
     Open,
     Wall,
