@@ -26,13 +26,13 @@ impl ProblemSolver for ProblemSolverPattern {
     lines: impl Iterator<Item = String>,
   ) -> Result<Self::Input, Self::Err> {
     let (board, tape) = extract_board_and_turns_from_stream(lines)?;
-    let board_clone = board.clone();
-    let br = board_clone.get_ref();
-    let mapping = Mapping::from(br.as_slice());
+    let mapping = Mapping::from_2d_vector(board.get_ref())?;
 
-    let mut cube = Cube::from(mapping);
-    cube.board = Some(board);
-    cube.dim = Some(Mapping::get_board_dimension(br));
+    let mut cube = Cube::from(&mapping);
+    cube.board = Some(board.clone());
+    cube.dim = Some(
+      Mapping::get_board_dimension(board.get_ref()).ok_or("invalid board")?,
+    );
 
     Ok(Self::Input { cube, tape })
   }
