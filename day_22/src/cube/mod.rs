@@ -65,19 +65,54 @@ fn get_ring_values<'a>(
   }
 }
 
-fn rotate_matrix<T: Clone + Default>(matrix: &Vec<Vec<T>>) -> Vec<Vec<T>> {
+enum Winding {
+  Clockwise,
+  CounterClockwise,
+}
+
+fn rotate_matrix<T: Clone + Default>(
+  matrix: &Vec<Vec<T>>,
+  winding: Winding,
+) -> Vec<Vec<T>> {
   let rows = matrix.len();
   let cols = matrix[0].len();
   let mut rotated_matrix = vec![vec![Default::default(); rows]; cols];
 
   (0..rows).for_each(|i| {
-    (0..cols).for_each(|j| {
-      // rotated_matrix[j][rows - i - 1] = matrix[i][j].clone();
-      rotated_matrix[cols - j - 1][i] = matrix[i][j].clone();
+    (0..cols).for_each(|j| match winding {
+      Winding::Clockwise => {
+        rotated_matrix[j][rows - i - 1] = matrix[i][j].clone()
+      }
+      Winding::CounterClockwise => {
+        rotated_matrix[cols - j - 1][i] = matrix[i][j].clone()
+      }
     });
   });
 
   rotated_matrix
+}
+
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum Orientation {
+  Horizontal,
+  Vertical,
+}
+
+impl Orientation {
+  pub fn from_heading(heading: &Heading) -> Self {
+    match heading {
+      Heading::Left | Heading::Right => Orientation::Horizontal,
+      Heading::Up | Heading::Down => Orientation::Vertical,
+    }
+  }
+
+  fn get_opposite(&self) -> Orientation {
+    match self {
+      Orientation::Horizontal => Orientation::Vertical,
+      Orientation::Vertical => Orientation::Horizontal,
+    }
+  }
 }
 
 
@@ -162,7 +197,13 @@ impl Mapping {
     None
   }
 
-  fn get_2d_adjacencies(&self, coord: Coord) -> [Option<usize>; 4] {
+  fn get_2d_adjacencies(&self, coord: &Coord) -> [Option<usize>; 4] {
+    /* these adjacencies match the Heading scoring:
+       0 => Right,
+       1 => Down,
+       2 => Left,
+       3 => Up,
+    */
     let mut adjacencies: [Option<usize>; 4] = [None; 4];
 
     if coord.x > 0 && matches!(self.0[coord.y][coord.x - 1], Legend::Open) {
@@ -187,6 +228,25 @@ impl Mapping {
     }
 
     adjacencies
+  }
+
+  fn get_front_face(&self) -> Option<Coord> {
+    let rows = self.0.len();
+    let cols = self.0[0].len();
+    let mut front_face_option: Option<Coord> = None;
+    for y in 0..rows {
+      for x in 0..cols {
+        if self.0[y][x] == Legend::Open {
+          front_face_option = Some(Coord::from((x, y)));
+          break;
+        }
+      }
+      if front_face_option.is_some() {
+        break;
+      }
+    }
+
+    front_face_option
   }
 }
 
@@ -213,27 +273,6 @@ impl CubeFace {
     }
   }
 
-  fn get_turn(path: &Vec<CubeFace>) -> Option<usize> {
-    let Some(mut raw_turns) = path.as_slice().windows(2).fold(Some(0), |acc, segment| {
-      let Some(cumulative) = acc else {
-        unreachable!();
-      };
-      let heading = get_orientation(segment);
-      Some(cumulative + heading as isize)
-    }) else {
-      return None;
-    };
-    if path.contains(&CubeFace::Back)
-      && (*path.last().unwrap() != CubeFace::Back
-        || path[path.len() - 2] == CubeFace::Left
-        || path[path.len() - 2] == CubeFace::Up)
-    {
-      // omg this was hard
-      raw_turns += 2;
-    }
-    Some(raw_turns.rem_euclid(4) as usize)
-  }
-
   fn opposite(cubeface: &CubeFace) -> CubeFace {
     match cubeface {
       CubeFace::Front => CubeFace::Back,
@@ -245,7 +284,7 @@ impl CubeFace {
     }
   }
 
-  fn get_natural_orientation(&self) -> Heading {
+  fn get_natural_heading(&self) -> Heading {
     match self {
       CubeFace::Down => Heading::Down,
       CubeFace::Up => Heading::Up,
@@ -253,23 +292,49 @@ impl CubeFace {
       CubeFace::Left | CubeFace::Back => Heading::Left,
     }
   }
-}
 
-fn get_orientation(segment: &[CubeFace]) -> usize {
-  match segment {
-    [CubeFace::Down, CubeFace::Left] => 1,
-    [CubeFace::Down, CubeFace::Right] => 3,
-    [CubeFace::Down, CubeFace::Down] => 2,
-    [CubeFace::Up, CubeFace::Left] => 3,
-    [CubeFace::Up, CubeFace::Right] => 1,
-    [CubeFace::Up, CubeFace::Up] => 2,
-    [CubeFace::Right, CubeFace::Up] => 3,
-    [CubeFace::Right, CubeFace::Down] => 1,
-    [CubeFace::Right, CubeFace::Right] => 2,
-    [CubeFace::Left, CubeFace::Up] => 1,
-    [CubeFace::Left, CubeFace::Down] => 3,
-    [CubeFace::Left, CubeFace::Left] => 2,
-    _ => 0,
+  fn get_natural_orientation(&self) -> Orientation {
+    match self {
+      CubeFace::Down | CubeFace::Up => Orientation::Vertical,
+      _ => Orientation::Horizontal,
+    }
+  }
+
+  fn get_cube_face(&self, cardinal_index: usize) -> CubeFace {
+    /* we will hold back as oriented so up and down remain constant */
+    let axis = if cardinal_index % 2 == 1 {
+      Orientation::Vertical
+    } else {
+      Orientation::Horizontal
+    };
+    let offset = match (self, &axis) {
+      (CubeFace::Right | CubeFace::Back, Orientation::Horizontal) => 2,
+      (CubeFace::Down, Orientation::Vertical) => 2,
+      _ => 0,
+    };
+    let face = match (cardinal_index + offset) % 4 {
+      0 => CubeFace::Right,
+      1 => CubeFace::Down,
+      2 => CubeFace::Left,
+      3 => CubeFace::Up,
+      _ => unreachable!(),
+    };
+
+    if axis == self.get_natural_orientation()
+      && !matches!(self, CubeFace::Front | CubeFace::Back)
+    {
+      if (cardinal_index + offset) % 4 < 2 {
+        CubeFace::Front
+      } else {
+        CubeFace::Back
+      }
+    } else {
+      face
+    }
+  }
+
+  fn get_cardinal_index_to_face(&self, face_type: &CubeFace) -> Option<usize> {
+    (0..4).find(|&i| &self.get_cube_face(i) == face_type)
   }
 }
 
@@ -280,7 +345,38 @@ pub struct Face {
   face_type: CubeFace,
   position: Coord, // Position in the 2D mapping
 }
+impl Face {
+  fn orient_values_to_face(
+    &self,
+    from_values: &mut Vec<Vec<Legend>>,
+    heading: &Heading,
+    to: &Face,
+  ) -> Option<()> {
+    let local_heading = Heading::from_score(
+      self
+        .face_type
+        .get_cardinal_index_to_face(&to.face_type)?
+        .try_into()
+        .unwrap(),
+    );
+    let mut i = 0;
+    while heading.get_score() != (local_heading.get_score() + i) % 4 {
+      i += 1;
+      *from_values = rotate_matrix(from_values, Winding::Clockwise);
+    }
+    if self.face_type == CubeFace::Back && i == 2 {
+      match Orientation::from_heading(heading) {
+        Orientation::Horizontal => from_values.reverse(),
+        Orientation::Vertical => {
+          from_values.iter_mut().for_each(|row| row.reverse())
+        }
+      }
+    }
+    dbg!(local_heading, i);
 
+    Some(())
+  }
+}
 
 // Define a cube struct to hold the faces
 #[derive(Default)]
@@ -432,34 +528,17 @@ impl Cube {
     Some(())
   }
 
-  fn determine_rotation(
-    &self,
-    target: CubeFace,
-    heading: Heading,
-  ) -> Option<(usize, bool)> {
-    /* working along the ring, from when you get to the surface, how must the mapping surface rotate to work along the row/column? For example, working across rows from front, back will be encountered second, so if the oriention of back and front in mapping are the same, back still needs to be treated in reverse. If left can only be reached after an up/down movement, it will require a rotation.
-
-    Heading is only used to determine horizontal or vertical progression, not which way it winds across the face.
-
-    Result (usize, bool) is number of clockwise rotations and if it must be reversed. */
-    let front = self.faces.get(*self.face_indices.get(&CubeFace::Front)?)?;
-    let target = self.faces.get(*self.face_indices.get(&target)?)?;
-
-    if front.face_type == target.face_type {
-      return Some((0, false));
-    }
-
+  fn get_path(&self, front: &Face, target: &Face) -> Option<Vec<CubeFace>> {
+    /* get the path along mapping from front to target */
     let mapping = self.mapping.as_ref()?;
-
     let mut visited: HashSet<Coord> = HashSet::new();
     let mut final_path: Vec<CubeFace> = Vec::new();
     let mut stack = vec![(front.to_owned(), Vec::new())];
     while let Some((face, mut path)) = stack.pop() {
-      eprintln!("considering {:?} {}", face.face_type, face.position);
       visited.insert(face.position.to_owned());
       path.push(face.face_type.to_owned());
       for coord in mapping
-        .get_2d_adjacencies(face.position.to_owned())
+        .get_2d_adjacencies(&face.position)
         .iter()
         .filter_map(|opt| *opt)
         .map(|i| mapping.get_mapping_location_of_index(i))
@@ -468,10 +547,6 @@ impl Cube {
           .faces
           .iter()
           .find(|f| Some(f.position.to_owned()) == coord)?;
-        eprintln!(
-          "-@{:?} {:?} {}",
-          coord, next_face.face_type, next_face.position
-        );
         if next_face.position == target.position {
           final_path = vec![path, vec![target.face_type]].concat();
           break;
@@ -484,108 +559,76 @@ impl Cube {
         break;
       }
     }
+    Some(final_path)
+  }
 
-    dbg!(&final_path);
-    let opt = if matches!(heading, Heading::Up | Heading::Down) {
-      let mut is_reversed = final_path.contains(&CubeFace::Back)
-        && final_path
-          .iter()
-          .filter(|cf| matches!(cf, CubeFace::Left | CubeFace::Right))
-          .count()
-          % 2
-          == 1;
-      let mut v = (-(CubeFace::get_turn(&final_path).unwrap_or(0) as isize))
-        .rem_euclid(4) as usize;
-      if target.face_type == CubeFace::Back && is_reversed {
-        is_reversed = false;
-        v += 2;
-      }
-      match target.face_type {
-        CubeFace::Back | CubeFace::Up | CubeFace::Down => {
-          Some((v, is_reversed))
-        }
-        _ => None,
-      }
+  fn get_turn(&self, path: &Vec<CubeFace>) -> Option<isize> {
+    let from = self.get_face(&path[path.len() - 2])?;
+    let to = self.get_face(path.last().unwrap())?;
+
+    let expected = to.face_type.get_cardinal_index_to_face(&from.face_type)?;
+    let received = to.position.get_adjacency_index_to_coord(&from.position)?;
+
+    let value = if to.face_type == CubeFace::Back {
+      0
     } else {
-      let mut is_reversed = final_path.contains(&CubeFace::Back)
-        && final_path
-          .iter()
-          .filter(|cf| matches!(cf, CubeFace::Up | CubeFace::Down))
-          .count()
-          % 2
-          == 1;
-      let mut h = (-(CubeFace::get_turn(&final_path).unwrap_or(0) as isize))
-        .rem_euclid(4) as usize;
-      if target.face_type == CubeFace::Back && is_reversed {
-        is_reversed = false;
-        h += 2;
-      }
-      match target.face_type {
-        CubeFace::Back | CubeFace::Left | CubeFace::Right => {
-          Some((h, is_reversed))
-        }
-        _ => None,
-      }
+      received as isize - expected as isize
     };
 
-    opt
+    Some(value)
+  }
+
+  fn get_face(&self, cube_face: &CubeFace) -> Option<&Face> {
+    let target_index = self.face_indices.get(cube_face)?;
+    Some(&self.faces[*target_index])
   }
 
   fn get_cube_face_values(
     &self,
     cube_face: CubeFace,
-    heading: Heading,
   ) -> Option<Vec<Vec<Legend>>> {
-    if let Some(board) = &self.board {
-      let dim = self.dim?;
-      let face_index = self.face_indices.get(&cube_face)?;
-      let face = &self.faces[*face_index];
-      let (x, y) = (face.position.x * dim, face.position.y * dim);
-      let mut face_values: Vec<Vec<Legend>> = board.get_ref()[y..(y + dim)]
-        .iter()
-        .map(|row| row[x..(x + dim)].to_vec())
-        .collect();
+    /* All values will be correct from Front's perspective, followed up Up/Down,
+    so Back will be oriented up but left and right reversed. */
+    let board = self.board.clone()?;
+    let dim = self.dim?;
 
-      let facing = self.determine_rotation(cube_face, heading.clone());
-      let is_natural_orientation = facing.is_some();
-      let mut orientation = heading;
-      let (rotation, is_reversed) = if is_natural_orientation {
-        facing.unwrap()
-      } else {
-        orientation = Heading::from_score((orientation.get_score() + 1) % 4);
-        self.determine_rotation(cube_face, orientation.to_owned())?
-      };
-      dbg!(rotation, is_reversed, x, y, dim, &orientation);
-      for _ in 0..rotation {
-        face_values = rotate_matrix(&face_values);
+    let target = &self.get_face(&cube_face)?;
+    if target.position.x == usize::MAX && target.position.y == usize::MAX {
+      return Some(vec![vec![Legend::Wall; dim]; dim]);
+    }
+    let (x, y) = (target.position.x * dim, target.position.y * dim);
+    let mut face_values: Vec<Vec<Legend>> = board.get_ref()[y..(y + dim)]
+      .iter()
+      .map(|row| row[x..(x + dim)].to_vec())
+      .collect();
+
+    if target.face_type != CubeFace::Front {
+      let front = &self.get_face(&CubeFace::Front)?;
+      let path = self.get_path(front, target)?;
+      dbg!(&path);
+      let turns = self.get_turn(&path)?;
+      dbg!(&turns);
+      for _ in 0..turns.rem_euclid(4) {
+        face_values = rotate_matrix(&face_values, Winding::CounterClockwise);
       }
-      if is_reversed {
-        match orientation {
-          Heading::Down | Heading::Up => {
-            if matches!(cube_face, CubeFace::Up) {
-              for row in face_values.iter_mut() {
-                row.reverse();
-              }
-            } else if cube_face != CubeFace::Down {
-              face_values.reverse()
+      if cube_face == CubeFace::Back {
+        let from_face = self.get_face(&path[path.len() - 2])?;
+        if cube_face.get_cardinal_index_to_face(&from_face.face_type)
+          != target
+            .position
+            .get_adjacency_index_to_coord(&from_face.position)
+        {
+          match from_face.face_type.get_natural_orientation() {
+            Orientation::Horizontal => {
+              face_values.iter_mut().for_each(|row| row.reverse())
             }
-          }
-          Heading::Left | Heading::Right => {
-            if matches!(cube_face, CubeFace::Left) {
-              face_values.reverse();
-            } else if cube_face != CubeFace::Right {
-              for row in face_values.iter_mut() {
-                row.reverse();
-              }
-            }
+            Orientation::Vertical => face_values.reverse(),
           }
         }
       }
-
-      Some(face_values)
-    } else {
-      None
     }
+
+    Some(face_values.to_owned())
   }
 
   fn get_cube_face_ring_indices(
@@ -593,9 +636,9 @@ impl Cube {
     cube_face: &CubeFace,
     heading: &Heading,
   ) -> Vec<usize> {
-    let opposites = match heading {
-      Heading::Left | Heading::Right => [CubeFace::Down, CubeFace::Up],
-      Heading::Up | Heading::Down => [CubeFace::Left, CubeFace::Right],
+    let opposites = match Orientation::from_heading(heading) {
+      Orientation::Horizontal => [CubeFace::Down, CubeFace::Up],
+      Orientation::Vertical => [CubeFace::Left, CubeFace::Right],
     };
 
     let original_front = self.face_indices[&CubeFace::Front];
@@ -627,6 +670,7 @@ impl Cube {
       cube_face_indices.sort_by(|i, j| comparator(i, j));
     }
     self.rotate_to_front(self.faces[original_front].face_type);
+
     cube_face_indices
       .iter()
       .cycle()
@@ -661,28 +705,39 @@ impl Cube {
         .collect::<Vec<_>>()
     );
 
-    let has_rotation_offset = cube_face_indices
-      .iter()
-      .all(|j| self.faces[*j].face_type != CubeFace::Front);
-    for i in cube_face_indices.clone() {
-      let face = &self.faces[i];
-      let mut face_values =
-        self.get_cube_face_values(face.face_type, heading.to_owned())?;
-      if has_rotation_offset {
-        let clockwise_rotations =
-          face.face_type.get_natural_orientation().get_score();
-        dbg!(clockwise_rotations);
-        for _ in 0..clockwise_rotations {
-          face_values = rotate_matrix(&face_values);
-        }
-      }
+    for ij in [
+      cube_face_indices.as_slice().windows(2).collect::<Vec<_>>(),
+      vec![&[
+        cube_face_indices.last().unwrap().to_owned(),
+        cube_face_indices.first().unwrap().to_owned(),
+      ]],
+    ]
+    .concat()
+    {
+      let from = &self.faces[*ij.first().unwrap()];
+      let to = &self.faces[*ij.last().unwrap()];
+      let mut from_values = self.get_cube_face_values(from.face_type)?;
 
-      dbg!(&face.face_type, &face_values);
+      /* if the starting face is Back, the local heading from following faces
+      will be inverted if the next local heading from face to face is inverted */
+      let cardinal_direction = if cube_face == CubeFace::Back
+        && from.face_type != CubeFace::Back
+        && from.face_type.get_cardinal_index_to_face(&to.face_type)? as isize
+          == (heading.get_score() + 2) % 4
+      {
+        eprintln!("did it");
+        Heading::from_score((heading.get_score() + 2) % 4)
+      } else {
+        heading.clone()
+      };
+
+      from.orient_values_to_face(&mut from_values, &cardinal_direction, to);
+      dbg!(&location, &from.face_type, &from_values);
 
       ring_data.extend(get_ring_values(
-        heading.to_owned(),
-        &face_values,
-        location.to_owned(),
+        cardinal_direction.clone(),
+        &from_values,
+        location.clone(),
       ));
     }
     ring_data = ring_data
@@ -701,88 +756,70 @@ impl From<&Mapping> for Cube {
     let mut cube = Cube::new();
     cube.mapping = Some(mapping.clone());
 
-    let rows = mapping.0.len();
-    let cols = mapping.0[0].len();
-    let mut front_face_option: Option<(usize, usize)> = None;
-    for y in 0..rows {
-      for x in 0..cols {
-        if mapping.0[y][x] == Legend::Open {
-          front_face_option = Some((x, y));
-          break;
-        }
-      }
-      if front_face_option.is_some() {
-        break;
-      }
-    }
-    let Some(location) = front_face_option else {
+    let Some(front_face_location) = mapping.get_front_face() else {
       return cube;
     };
-    let front_face_location = Coord::from(location);
     let position = front_face_location.clone();
     cube.add_face(Face { face_type: CubeFace::Front, position });
 
     let mut stack: Vec<(Vec<CubeFace>, [Option<usize>; 4])> = Vec::new();
-    let neighbors = mapping.get_2d_adjacencies(front_face_location.clone());
+    let neighbors = mapping.get_2d_adjacencies(&front_face_location);
     stack.push((vec![CubeFace::Front], neighbors));
 
     let mut visited: Vec<Coord> = Vec::with_capacity(6);
     visited.push(front_face_location.clone());
     while let Some((path, adjacencies)) = stack.pop() {
-      let origin_face = path.last().unwrap();
-      let original_front = cube.face_indices[&CubeFace::Front];
-      if *origin_face == CubeFace::Back {
-        let last = path.last().unwrap();
-        cube.rotate_to_front(*last);
-        cube.rotate_to_front(*last);
-      } else {
-        cube.rotate_to_front(*origin_face);
+      let center = cube.get_face(path.last().unwrap()).unwrap().to_owned();
+      let mut index_offset = 0;
+      if path.len() > 1 {
+        let previous = cube.get_face(&path[path.len() - 2]).unwrap().to_owned();
+        if let Some(from_index) = adjacencies.iter().position(|i_opt| {
+          if let Some(i) = i_opt {
+            if let Some(position) = mapping.get_mapping_location_of_index(*i) {
+              return previous.position == position;
+            }
+          }
+
+          false
+        }) {
+          index_offset = from_index as isize
+            - center
+              .face_type
+              .get_cardinal_index_to_face(&previous.face_type)
+              .unwrap() as isize;
+        }
       }
+
       for i in 0..4 {
         if let Some(index) = adjacencies[i] {
           let Some(position) = mapping.get_mapping_location_of_index(index) else {
             return cube;
           };
           if !visited.contains(&position) {
-            let heading = CubeFace::get_turn(&path).unwrap_or(0);
             let cardinal_index =
-              (i as isize + heading as isize).rem_euclid(4) as usize;
-
-            let result = cube.add_to(
-              CubeFace::from_cardinal_index(cardinal_index),
-              position.to_owned(),
-            );
+              (i as isize - index_offset).rem_euclid(4) as usize;
+            let target_face = center.face_type.get_cube_face(cardinal_index);
+            let result = cube.add_to(target_face, position.to_owned());
             if result.is_none() {
               eprintln!(
-                "failed to add {:?} {} with heading \
-                 {cardinal_index}={heading}+{i} from path {:?}",
-                CubeFace::from_cardinal_index(cardinal_index),
+                "failed to add relative face {:?} {} + direction \
+                 {i}+{index_offset} with path {:?} and faces {:?}",
+                target_face,
                 position.to_owned(),
-                path
+                path,
+                cube.face_indices.keys()
               );
               break;
             }
-            cube.rotate_to_front(cube.faces[original_front].face_type);
+
             let mut new_path = path.clone();
-            new_path.push(
-              cube
-                .faces
-                .iter()
-                .find(|face: &&Face| face.position == position)
-                .unwrap()
-                .face_type,
-            );
-            stack.push((
-              new_path,
-              mapping.get_2d_adjacencies(position.to_owned()),
-            ));
-            cube.rotate_to_front(*origin_face);
+            new_path.push(target_face);
+            stack.push((new_path, mapping.get_2d_adjacencies(&position)));
 
             visited.push(position);
           }
         }
       }
-      cube.rotate_to_front(cube.faces[original_front].face_type);
     }
 
     if cube.faces.len() == 5 {

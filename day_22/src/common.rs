@@ -106,6 +106,30 @@ pub mod prelude {
     pub y: usize,
   }
 
+  impl Coord {
+    pub fn get_adjacency_index_to_coord(&self, other: &Coord) -> Option<usize> {
+      if self.x == other.x {
+        if self.y + 1 == other.y {
+          Some(1) // Moving down
+        } else if self.y == other.y + 1 {
+          Some(3) // Moving up
+        } else {
+          None // Not adjacent in y-axis
+        }
+      } else if self.y == other.y {
+        if self.x + 1 == other.x {
+          Some(0) // Moving right
+        } else if self.x == other.x + 1 {
+          Some(2) // Moving left
+        } else {
+          None // Not adjacent in x-axis
+        }
+      } else {
+        None // Not adjacent
+      }
+    }
+  }
+
   impl From<(usize, usize)> for Coord {
     fn from(coords: (usize, usize)) -> Self {
       Coord { x: coords.0, y: coords.1 }
