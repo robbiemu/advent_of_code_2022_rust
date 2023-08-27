@@ -542,6 +542,70 @@ fn test_get_cube_face_ring() {
   expected_ring_values = vec![
     // Right
     Legend::Open,
+    Legend::Open,
+    // Back
+    Legend::Open,
+    Legend::Open,
+    Legend::Wall,
+    Legend::Open,
+    // Left
+    Legend::Open,
+    Legend::Open,
+    Legend::Open,
+    Legend::Open,
+    // Front
+    Legend::Open,
+    Legend::Wall,
+    Legend::Open,
+    Legend::Open,
+    // Right
+    Legend::Open,
+    Legend::Open,
+  ];
+  assert_eq!(
+    cube.get_cube_face_ring(
+      CubeFace::Right,
+      Coord { x: 1, y: 1 },
+      Heading::Right
+    ),
+    Some(expected_ring_values)
+  );
+
+  expected_ring_values = vec![
+    // Right
+    Legend::Open,
+    // Front
+    Legend::Open,
+    Legend::Open,
+    Legend::Wall,
+    Legend::Open,
+    // Left
+    Legend::Open,
+    Legend::Open,
+    Legend::Open,
+    Legend::Open,
+    // Back
+    Legend::Open,
+    Legend::Wall,
+    Legend::Open,
+    Legend::Open,
+    // Right
+    Legend::Open,
+    Legend::Open,
+    Legend::Open,
+  ];
+  assert_eq!(
+    cube.get_cube_face_ring(
+      CubeFace::Right,
+      Coord { x: 1, y: 1 },
+      Heading::Left
+    ),
+    Some(expected_ring_values)
+  );
+
+  expected_ring_values = vec![
+    // Right
+    Legend::Open,
     Legend::Wall,
     // Up
     Legend::Open,

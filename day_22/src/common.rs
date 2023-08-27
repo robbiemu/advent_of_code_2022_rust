@@ -2,6 +2,7 @@ pub mod prelude {
   use chumsky::prelude::*;
   use nalgebra::DVector;
   use std::{
+    convert::Infallible,
     fmt,
     fmt::{Display, Formatter},
     ops::Range,
@@ -10,14 +11,15 @@ pub mod prelude {
   use Heading::*;
   use Instruction::*;
   use Legend::*;
-  use Turn::*;
+  use Winding::*;
 
 
   pub const STARTING_COORD: Coord = Coord { x: 0, y: 0 };
 
-  #[derive(Clone, Debug, PartialEq)]
+  #[derive(Clone, Debug, Default, PartialEq)]
   pub enum Heading {
     Left,
+    #[default]
     Right,
     Up,
     Down,
@@ -43,12 +45,12 @@ pub mod prelude {
       }
     }
 
-    pub fn apply_turn(&mut self, turn: Turn) {
+    pub fn apply_turn(&mut self, turn: Winding) {
       let rotation = Heading::get_score(self);
 
       let offset = match turn {
         Clockwise => 1,
-        CounterClickwise => -1,
+        CounterClockwise => -1,
       };
 
       *self = Heading::from_score((rotation + offset).rem_euclid(4))
@@ -142,10 +144,12 @@ pub mod prelude {
     }
   }
 
+  #[derive(Default)]
   pub struct Turtle {
     pub location: Coord,
     pub heading: Heading,
-    pub previous_way_points: Vec<(Coord, Heading)>,
+    pub cube_face_index: usize,
+    pub previous_way_points: Vec<(Coord, usize, Heading)>,
   }
 
   impl Turtle {
@@ -154,6 +158,7 @@ pub mod prelude {
         location: STARTING_COORD,
         heading: Right,
         previous_way_points: Vec::new(),
+        ..Default::default()
       }
     }
 
@@ -266,30 +271,8 @@ pub mod prelude {
   }
 
   #[derive(Clone, Debug)]
-  pub enum Turn {
-    Clockwise,
-    CounterClickwise,
-  }
-
-  impl Turn {
-    fn is_turn_indication(c: char) -> bool {
-      matches!(c, 'L' | 'R')
-    }
-  }
-
-  impl From<char> for Turn {
-    fn from(value: char) -> Self {
-      match value {
-        'L' => CounterClickwise,
-        'R' => Clockwise,
-        _ => unimplemented!(),
-      }
-    }
-  }
-
-  #[derive(Clone, Debug)]
   pub enum Instruction {
-    AdjustHeading(Turn),
+    AdjustHeading(Winding),
     Move(usize),
   }
 
@@ -304,11 +287,33 @@ pub mod prelude {
         .at_least(1)
         .collect::<String>()
         .map(|digits| Move(digits.parse().unwrap_or(0))),
-      filter(|c: &char| Turn::is_turn_indication(*c))
-        .map(|c| AdjustHeading(Turn::from(c))),
+      filter(|c: &char| Winding::is_turn_indication(*c))
+        .map(|c| AdjustHeading(Winding::from(c))),
     ))
     .repeated()
     .collect::<Vec<_>>()
+  }
+
+  #[derive(Clone, Debug)]
+  pub enum Winding {
+    Clockwise,
+    CounterClockwise,
+  }
+
+  impl Winding {
+    fn is_turn_indication(c: char) -> bool {
+      matches!(c, 'L' | 'R')
+    }
+  }
+
+  impl From<char> for Winding {
+    fn from(value: char) -> Self {
+      match value {
+        'L' => CounterClockwise,
+        'R' => Clockwise,
+        _ => unimplemented!(),
+      }
+    }
   }
 }
 

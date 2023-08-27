@@ -63,7 +63,7 @@ fn represent_solution(representation: &mut Board, read_head: &Turtle) {
   read_head
     .previous_way_points
     .iter()
-    .for_each(|(pt, heading)| {
+    .for_each(|(pt, _, heading)| {
       canvas[pt.y][pt.x] = Legend::RepresentationOnlyTurtle(heading.to_owned())
     });
   canvas[read_head.location.y][read_head.location.x] =
@@ -84,9 +84,11 @@ impl Apply for Turtle {
   }
 
   fn traverse(&mut self, n: usize, board: &Board) {
-    self
-      .previous_way_points
-      .push((self.location.clone(), self.heading.clone()));
+    self.previous_way_points.push((
+      self.location.clone(),
+      0,
+      self.heading.clone(),
+    ));
 
     let module = self.get_module(board);
     let offsets = self.get_offsets(board);
