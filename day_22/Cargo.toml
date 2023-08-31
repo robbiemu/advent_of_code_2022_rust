@@ -1,0 +1,25 @@
+[package]
+name = "day_22"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+chumsky = { version = "0.9.2", optional = true }
+nalgebra = { version = "0.32.3", optional = true }
+regex = { version = "1.9.4", optional = true }
+
+[features]
+default = []
+part1 = ["chumsky", "nalgebra"]
+part2 = ["regex"]
+
+
+[[bin]]
+name="part1"
+path="src/part1.rs"
+
+[[bin]]
+name="pt2"
+path="src/pt2.rs"
