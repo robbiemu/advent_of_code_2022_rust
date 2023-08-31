@@ -2,7 +2,6 @@ pub mod prelude {
   use chumsky::prelude::*;
   use nalgebra::DVector;
   use std::{
-    convert::Infallible,
     fmt,
     fmt::{Display, Formatter},
     ops::Range,
@@ -106,30 +105,6 @@ pub mod prelude {
   pub struct Coord {
     pub x: usize,
     pub y: usize,
-  }
-
-  impl Coord {
-    pub fn get_adjacency_index_to_coord(&self, other: &Coord) -> Option<usize> {
-      if self.x == other.x {
-        if self.y + 1 == other.y {
-          Some(1) // Moving down
-        } else if self.y == other.y + 1 {
-          Some(3) // Moving up
-        } else {
-          None // Not adjacent in y-axis
-        }
-      } else if self.y == other.y {
-        if self.x + 1 == other.x {
-          Some(0) // Moving right
-        } else if self.x == other.x + 1 {
-          Some(2) // Moving left
-        } else {
-          None // Not adjacent in x-axis
-        }
-      } else {
-        None // Not adjacent
-      }
-    }
   }
 
   impl From<(usize, usize)> for Coord {
@@ -241,14 +216,6 @@ pub mod prelude {
 
     pub fn get_mut_ref(&mut self) -> &mut Vec<Vec<Legend>> {
       &mut self.0
-    }
-
-    pub fn get_ref(&self) -> &Vec<Vec<Legend>> {
-      &self.0
-    }
-
-    pub(crate) fn get_element(&self, x: usize, y: usize) -> &Legend {
-      &self.0[y][x]
     }
   }
 
