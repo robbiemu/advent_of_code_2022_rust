@@ -11,6 +11,7 @@
   "rust-analyzer.checkOnSave": true,
   "rust-analyzer.cargo.buildScripts.overrideCommand": null,
   "rust-analyzer.linkedProjects": [
+    "./day_23/Cargo.toml",
     "./day_23/Cargo.toml"
   ],
   "rust-analyzer.rustfmt.extraArgs": [

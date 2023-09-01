@@ -7,6 +7,6 @@ edition = "2021"
 
 [dependencies]
 
-[[bin]]
-name="part1"
-path="src/part1.rs"
+[features]
+part1 = []
+part2 = []

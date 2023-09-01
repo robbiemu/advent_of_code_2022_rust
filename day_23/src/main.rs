@@ -5,8 +5,12 @@ use std::rc::Rc;
 mod common;
 use common::*;
 
+
 const DATA: &str = include_str!("../army_of_elves.txt");
+#[cfg(feature = "part1")]
 const STEPS: usize = 10;
+#[cfg(feature = "part2")]
+const STEPS: usize = usize::MAX;
 
 type Map = Rc<RefCell<Vec<Vec<char>>>>;
 type Elves = Rc<RefCell<Vec<Coord>>>;
@@ -133,10 +137,16 @@ fn main() {
 }
 
 fn extract() -> (Map, Elves) {
-  let map = DATA
+  let mut map = DATA
     .split('\n')
     .map(|line| line.chars().collect::<Vec<_>>())
     .collect::<Vec<_>>();
+  let width = map[0].len();
+  let height = map.len();
+  let estimated_capacity =
+    (((width * height) / 2) as f64 * (width * height) as f64).sqrt() as usize;
+  map.reserve(estimated_capacity);
+
   let elves = map
     .iter()
     .enumerate()
@@ -154,7 +164,8 @@ fn extract() -> (Map, Elves) {
 }
 
 fn transform(map: Map, elves: Elves) {
-  readout(map.clone(), elves.clone());
+  // readout(map.clone(), elves.clone());
+  let mut out = 0;
   for i in 0..STEPS {
     conditionally_expand_map(map.clone(), elves.clone());
     let propositions: HashMap<Coord, Vec<Coord>> =
@@ -169,6 +180,9 @@ fn transform(map: Map, elves: Elves) {
         }
         acc
       });
+    if propositions.is_empty() {
+      break;
+    }
     propositions.iter().for_each(|(destination, pedestrians)| {
       if pedestrians.len() == 1 {
         let peoton = pedestrians.last().unwrap();
@@ -176,8 +190,10 @@ fn transform(map: Map, elves: Elves) {
         elves.borrow_mut()[index] = destination.to_owned();
       }
     });
-    readout(map.clone(), elves.clone());
+    out = i;
+    // readout(map.clone(), elves.clone());
   }
+  println!("moves taken {}", out + 2);
 }
 
 fn conditionally_expand_map(map: Map, elves: Elves) {
