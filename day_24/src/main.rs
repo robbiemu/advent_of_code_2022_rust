@@ -2,7 +2,13 @@ use std::{collections::HashSet, rc::Rc};
 
 
 const DATA: &str = include_str!("../input.txt");
-const ESCAPE_HATCH: usize = 1000;
+const STORM_SYMBOLS: [char; 4] = ['<', '>', '^', 'v'];
+const NEIGHBORS: [[isize; 2]; 5] = [[1, 0], [0, 1], [-1, 0], [0, -1], [0, 0]];
+const ESCAPE_HATCH: usize = 10_000;
+#[cfg(not(feature = "part2"))]
+const REPEATED_SEARCH: bool = false;
+#[cfg(feature = "part2")]
+const REPEATED_SEARCH: bool = true;
 
 type ProblemDescription = (Coord, Coord, Coord, Rc<Vec<Storm>>);
 
@@ -61,7 +67,6 @@ fn extract() -> Result<ProblemDescription, String> {
     .map(|line| line.chars().collect::<Vec<_>>())
     .collect::<Vec<_>>();
   let last_row = input.len() - 1;
-  let forms = ['<', '>', '^', 'v'];
   let mut start = Coord::default();
   let mut end = Coord::default();
   let mut storms: Vec<Storm> = Vec::new();
@@ -87,7 +92,7 @@ fn extract() -> Result<ProblemDescription, String> {
         continue;
       }
 
-      if forms.contains(tile) {
+      if STORM_SYMBOLS.contains(tile) {
         storms.push(Storm {
           direction: tile.to_owned(),
           coord: Coord { x: x as isize, y: y as isize },
@@ -105,10 +110,27 @@ fn transform(
   terminus: &Coord,
   storms: Rc<Vec<Storm>>,
 ) -> Result<usize, String> {
+  if REPEATED_SEARCH {
+    let mut t = search(start, end, terminus, storms.clone(), 0)?;
+    t = search(end, start, terminus, storms.clone(), t)?;
+    t = search(start, end, terminus, storms, t)?;
+
+    Ok(t)
+  } else {
+    search(start, end, terminus, storms, 0)
+  }
+}
+
+fn search(
+  start: &Coord,
+  end: &Coord,
+  terminus: &Coord,
+  storms: Rc<Vec<Storm>>,
+  time: usize,
+) -> Result<usize, String> {
   let mut q: HashSet<Coord> = HashSet::from_iter([*start]);
-  let neighbors = [[1, 0], [0, 1], [-1, 0], [0, -1], [0, 0]];
   let mut mapped_storms: Vec<Coord> = Vec::with_capacity(storms.len());
-  for t in 1.. {
+  for t in time + 1.. {
     mapped_storms.clear();
     for storm in storms.iter() {
       mapped_storms.push(storm.offset(t as isize, terminus)?);
@@ -116,7 +138,7 @@ fn transform(
     q = q
       .iter()
       .flat_map(|coord| {
-        neighbors.map(|offset| Coord {
+        NEIGHBORS.map(|offset| Coord {
           x: offset[0] + coord.x,
           y: offset[1] + coord.y,
         })
@@ -137,7 +159,6 @@ fn transform(
       break;
     }
   }
-  dbg!(&storms, terminus, q);
 
   Err("No path to end".to_string())
 }
