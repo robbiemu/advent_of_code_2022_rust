@@ -3,9 +3,18 @@ This repo is just my code as I work through [Advent of Code](https://adventofcod
 
 I was urged not to do this yet, to instead go back and walk through [rustlings](https://github.com/rust-lang/rustlings) and to read [the book](https://www.rust-lang.org/learn). I certainly might do that, I too often confuse `rustc` for `cargo build` and make trivial errors. Yet, I am largely up and running, and [the Primeagen](https://github.com/ThePrimeagen) recently suggested advent of code is a great way to begin to learn a new (ternary) language in [How to Learn A New Programming Language](https://youtu.be/E8cM12jRH7k). Further in the rust discord several people over the past week suggested _Advent of Code_ as a good way to learn the language. None of this means that working through _rustlings_ and taking time to read _the book_ is not worht my time, but I would like to see how far I will go before wanting to come back and find the kernels of knowledge I wish I knew earlier. :)
 
+### Takeaways 
+done!
+
+I need to go back and look at rustlings now. Towards the end I really began to understand when to use rc's, but I need to focus more on how. Too often I prefer to use GPT to solve a borrow issue still, though less since Rcs became a part of my repertoire. I also found that, after submitting and scanning the reddit, others had found a much faster solution, sometimes considerably so. I often fall back on deconstructing a problem into a standard form instead of working with the raw data. 
+
+Looking forward to contributing more to good-lp, and seeing where this goes :)
+
 ## Highlights
 
-Some projects were firsts for me.
+Days 15 and 22 were brutal. For day 15 part 2 I basically gave up solving it without any research, while day 22 part 2 I decided to work _really hard_ and do it myself. In the later case, I even found what turned out to be a unique way to fold the cube, but I still had a subtle bug with rotations (which were recalculated on the spot), and I ended up using a more typical approach instead fo fixing my unique approach. A few others were surprisingly difficult too, at least 7 of the days were more than one day to solve for me. But generally, even using this to learn a new language, everything was fairly facile. 
+
+Some projects were firsts for me. 
 
 ### Day 1
 
